@@ -2,7 +2,7 @@ cppstd
 ======
 
 [![](https://travis-ci.com/lycantropos/cppstd.svg?branch=master)](https://travis-ci.com/lycantropos/cppstd "Travis CI")
-[![](https://dev.azure.com/lycantropos/cppstd/_apis/build/status/lycantropos.cppstd?branchName=master)](https://dev.azure.com/lycantropos/cppstd/_build/latest?branchName=master "Azure Pipelines")
+[![](https://dev.azure.com/lycantropos/cppstd/_apis/build/status/lycantropos.cppstd?branchName=master)](https://dev.azure.com/lycantropos/cppstd/_build/latest?definitionId=30&branchName=master "Azure Pipelines")
 [![](https://codecov.io/gh/lycantropos/cppstd/branch/master/graph/badge.svg)](https://codecov.io/gh/lycantropos/cppstd "Codecov")
 [![](https://img.shields.io/github/license/lycantropos/cppstd.svg)](https://github.com/lycantropos/cppstd/blob/master/LICENSE "License")
 [![](https://badge.fury.io/py/cppstd.svg)](https://badge.fury.io/py/cppstd "PyPI")
