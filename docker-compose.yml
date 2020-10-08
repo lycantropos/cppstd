@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  cppstd:
+    build:
+      context: .
+      args:
+        - IMAGE_NAME=${IMAGE_NAME}
+        - IMAGE_VERSION=${IMAGE_VERSION}
+    image: lycantropos/cppstd:0.0.0
+    volumes:
+      - ./cppstd/:/opt/cppstd/cppstd/
+      - ./src/:/opt/cppstd/src/
+      - ./tests/:/opt/cppstd/tests/
+      - ./README.md:/opt/cppstd/README.md
+      - ./requirements.txt:/opt/cppstd/requirements.txt
+      - ./requirements-setup.txt:/opt/cppstd/requirements-setup.txt
+      - ./requirements-tests.txt:/opt/cppstd/requirements-tests.txt
+      - ./setup.py:/opt/cppstd/setup.py
+      - ./pytest.ini:/opt/cppstd/pytest.ini
+    entrypoint: pytest
