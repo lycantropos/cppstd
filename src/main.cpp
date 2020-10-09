@@ -95,6 +95,14 @@ class Iterator {
     return position == other.position;
   }
 
+  bool operator<(const Iterator& other) const {
+    return position < other.position;
+  }
+
+  bool operator<=(const Iterator& other) const {
+    return position <= other.position;
+  }
+
  private:
   typename Collection::const_iterator position;
   const Collection& collection;
@@ -197,6 +205,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self += std::int64_t())
       .def(py::self -= std::int64_t())
       .def(py::self == py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
       .def("__iter__", [](const VectorIterator& self) { return self; })
       .def("__next__", &VectorIterator::next);
 }
