@@ -59,12 +59,34 @@ class Iterator {
         collection);
   }
 
+  Iterator operator-(std::int64_t offset) const {
+    return Iterator(
+        position - (offset < 0
+                        ? std::max(static_cast<std::int64_t>(std::distance(
+                                       std::end(collection), position)),
+                                   offset)
+                        : std::min(static_cast<std::int64_t>(std::distance(
+                                       std::begin(collection), position)),
+                                   offset)),
+        collection);
+  }
+
   Iterator& operator+=(std::int64_t offset) {
     position += (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
                                            position, std::begin(collection))),
                                        offset)
                             : std::min(static_cast<std::int64_t>(std::distance(
                                            position, std::end(collection))),
+                                       offset));
+    return *this;
+  }
+
+  Iterator& operator-=(std::int64_t offset) {
+    position -= (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
+                                           std::end(collection), position)),
+                                       offset)
+                            : std::min(static_cast<std::int64_t>(std::distance(
+                                           std::begin(collection), position)),
                                        offset));
     return *this;
   }
@@ -167,7 +189,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
       .def(py::self + std::int64_t())
+      .def(py::self - std::int64_t())
       .def(py::self += std::int64_t())
+      .def(py::self -= std::int64_t())
       .def("__iter__", [](const VectorIterator& self) { return self; })
       .def("__next__", &VectorIterator::next);
 }
