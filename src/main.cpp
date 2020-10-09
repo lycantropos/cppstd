@@ -96,6 +96,11 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", repr<Vector>)
       .def("begin", [](Vector& self) { return self.begin(); })
       .def("end", [](Vector& self) { return self.end(); })
+      .def("pop_back",
+           [](Vector& self) {
+             if (self.empty()) throw std::out_of_range("Vector is empty.");
+             self.pop_back();
+           })
       .def(
           "push_back",
           [](Vector& self, Object object) { self.push_back(object); },
