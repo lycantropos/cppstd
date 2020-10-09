@@ -28,6 +28,25 @@ std::string repr(const Object& object) {
   return stream.str();
 }
 
+template <class Sequence>
+static std::size_t to_size(Sequence& sequence) {
+  return sequence.size();
+}
+
+template <class Sequence>
+static const typename Sequence::value_type& to_item(const Sequence& sequence,
+                                                    std::int64_t index) {
+  std::int64_t size = to_size(sequence);
+  std::int64_t normalized_index = index >= 0 ? index : index + size;
+  if (normalized_index < 0 || normalized_index >= size)
+    throw std::out_of_range(size ? (std::string("Index should be in range(" +
+                                                std::to_string(-size) + ", ") +
+                                    std::to_string(size) + "), but found " +
+                                    std::to_string(index) + ".")
+                                 : std::string("Sequence is empty."));
+  return sequence[normalized_index];
+}
+
 namespace std {
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   stream << C_STR(MODULE_NAME) "." VECTOR_NAME "(";
@@ -53,6 +72,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           result.push_back(py::reinterpret_borrow<Object>(element));
         return result;
       }))
+      .def("__getitem__", to_item<Vector>, py::arg("index"))
+      .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
       .def("begin", [](Vector& self) { return self.begin(); })
       .def("end", [](Vector& self) { return self.end(); })
