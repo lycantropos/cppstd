@@ -81,8 +81,13 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           "push_back",
           [](Vector& self, Object object) { self.push_back(object); },
           py::arg("value"))
-      .def("reserve", &Vector::reserve),
-      py::arg("capacity");
+      .def("reserve", &Vector::reserve, py::arg("capacity"))
+      .def(
+          "resize",
+          [](Vector& self, std::size_t size, Object value) {
+            self.resize(size, value);
+          },
+          py::arg("size"), py::arg("value") = py::none());
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
       .def(py::self + std::size_t())
