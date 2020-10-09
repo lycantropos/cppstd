@@ -32,29 +32,51 @@ static std::size_t to_size(Sequence& sequence) {
   return sequence.size();
 }
 
-template <class Iterable>
+template <class Collection>
 class Iterator {
  public:
-  Iterator(const Iterable& iterable_)
-      : position(std::begin(iterable_)), iterable(iterable_){};
+  Iterator(const Collection& collection_)
+      : position(std::begin(collection_)), collection(collection_){};
 
-  Iterator(const typename Iterable::const_iterator& position,
-           const Iterable& iterable_)
-      : position(position), iterable(iterable_){};
+  Iterator(typename Collection::const_iterator&& position,
+           const Collection& collection_)
+      : position(position), collection(collection_){};
 
-  const typename Iterable::value_type& next() {
-    if (position == std::end(iterable)) throw py::stop_iteration();
+  const typename Collection::value_type& next() {
+    if (position == std::end(collection)) throw py::stop_iteration();
     return *position++;
   }
 
+  Iterator operator+(std::int64_t offset) const {
+    return Iterator(
+        position + (offset < 0
+                        ? std::max(static_cast<std::int64_t>(std::distance(
+                                       position, std::begin(collection))),
+                                   offset)
+                        : std::min(static_cast<std::int64_t>(std::distance(
+                                       position, std::end(collection))),
+                                   offset)),
+        collection);
+  }
+
+  Iterator& operator+=(std::int64_t offset) {
+    position += (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
+                                           position, std::begin(collection))),
+                                       offset)
+                            : std::min(static_cast<std::int64_t>(std::distance(
+                                           position, std::end(collection))),
+                                       offset));
+    return *this;
+  }
+
  private:
-  typename Iterable::const_iterator position;
-  const Iterable& iterable;
+  typename Collection::const_iterator position;
+  const Collection& collection;
 };
 
-template <class Iterable>
-static Iterator<Iterable> to_iterator(const Iterable& iterable) {
-  return Iterator<Iterable>(iterable);
+template <class Collection>
+static Iterator<Collection> to_iterator(const Collection& collection) {
+  return Iterator(collection);
 }
 
 template <class Sequence, class Index = std::int64_t>
@@ -144,6 +166,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("size"), py::arg("value") = py::none());
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
+      .def(py::self + std::int64_t())
+      .def(py::self += std::int64_t())
       .def("__iter__", [](const VectorIterator& self) { return self; })
       .def("__next__", &VectorIterator::next);
 }
