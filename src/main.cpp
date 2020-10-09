@@ -73,6 +73,25 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def("__getitem__", to_item<Vector>, py::arg("index"))
+      .def("__getitem__",
+           [](Vector& self, py::slice slice) {
+             std::size_t raw_start, raw_stop, raw_step, slice_length;
+             if (!slice.compute(self.size(), &raw_start, &raw_stop, &raw_step,
+                                &slice_length))
+               throw py::error_already_set();
+             auto start = static_cast<std::int64_t>(raw_start);
+             auto stop = static_cast<std::int64_t>(raw_stop);
+             auto step = static_cast<std::int64_t>(raw_step);
+             Vector result;
+             result.reserve(slice_length);
+             if (step < 0)
+               for (; start > stop; start += step)
+                 result.push_back(self[start]);
+             else
+               for (; start < stop; start += step)
+                 result.push_back(self[start]);
+             return result;
+           })
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
       .def("begin", [](Vector& self) { return self.begin(); })
