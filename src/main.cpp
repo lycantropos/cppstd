@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 namespace py = pybind11;
 
