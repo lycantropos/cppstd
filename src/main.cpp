@@ -33,9 +33,9 @@ static std::size_t to_size(Sequence& sequence) {
   return sequence.size();
 }
 
-template <class Sequence>
+template <class Sequence, class Index = std::int64_t>
 static const typename Sequence::value_type& to_item(const Sequence& sequence,
-                                                    std::int64_t index) {
+                                                    Index index) {
   std::int64_t size = to_size(sequence);
   std::int64_t normalized_index = index >= 0 ? index : index + size;
   if (normalized_index < 0 || normalized_index >= size)
