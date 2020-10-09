@@ -18,7 +18,6 @@ namespace py = pybind11;
 
 using Object = py::object;
 using Vector = std::vector<py::object>;
-using VectorIterator = Vector::iterator;
 
 template <class Object>
 std::string repr(const Object& object) {
@@ -31,6 +30,31 @@ std::string repr(const Object& object) {
 template <class Sequence>
 static std::size_t to_size(Sequence& sequence) {
   return sequence.size();
+}
+
+template <class Iterable>
+class Iterator {
+ public:
+  Iterator(const Iterable& iterable_)
+      : position(std::begin(iterable_)), iterable(iterable_){};
+
+  Iterator(const typename Iterable::const_iterator& position,
+           const Iterable& iterable_)
+      : position(position), iterable(iterable_){};
+
+  const typename Iterable::value_type& next() {
+    if (position == std::end(iterable)) throw py::stop_iteration();
+    return *position++;
+  }
+
+ private:
+  typename Iterable::const_iterator position;
+  const Iterable& iterable;
+};
+
+template <class Iterable>
+static Iterator<Iterable> to_iterator(const Iterable& iterable) {
+  return Iterator<Iterable>(iterable);
 }
 
 template <class Sequence, class Index = std::int64_t>
@@ -58,6 +82,8 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   return stream << ")";
 }
 }  // namespace std
+
+using VectorIterator = Iterator<Vector>;
 
 PYBIND11_MAKE_OPAQUE(Vector);
 
@@ -92,10 +118,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             return result;
           },
           py::arg("slice"))
+      .def("__iter__", to_iterator<Vector>)
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
-      .def("begin", [](Vector& self) { return self.begin(); })
-      .def("end", [](Vector& self) { return self.end(); })
+      .def(
+          "begin",
+          [](const Vector& self) { return VectorIterator(self.begin(), self); })
+      .def("end",
+           [](const Vector& self) { return VectorIterator(self.end(), self); })
       .def("pop_back",
            [](Vector& self) {
              if (self.empty()) throw std::out_of_range("Vector is empty.");
@@ -114,10 +144,6 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("size"), py::arg("value") = py::none());
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
-      .def(py::self + std::size_t())
-      .def(py::self - std::size_t())
-      .def(py::self == py::self)
-      .def(py::self != py::self)
-      .def(py::self < py::self)
-      .def("value", &VectorIterator::operator*);
+      .def("__iter__", [](const VectorIterator& self) { return self; })
+      .def("__next__", &VectorIterator::next);
 }
