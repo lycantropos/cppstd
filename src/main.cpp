@@ -56,9 +56,12 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", repr<Vector>)
       .def("begin", [](Vector& self) { return self.begin(); })
       .def("end", [](Vector& self) { return self.end(); })
-      .def("push_back",
-           [](Vector& self, Object object) { self.push_back(object); })
-      .def("reserve", &Vector::reserve), py::arg("capacity");
+      .def(
+          "push_back",
+          [](Vector& self, Object object) { self.push_back(object); },
+          py::arg("value"))
+      .def("reserve", &Vector::reserve),
+      py::arg("capacity");
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
       .def(py::self + std::size_t())
