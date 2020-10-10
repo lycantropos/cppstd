@@ -35,78 +35,107 @@ static std::size_t to_size(Sequence& sequence) {
 template <class Collection>
 class Iterator {
  public:
-  Iterator(const Collection& collection_)
-      : position(std::begin(collection_)), collection(collection_){};
+  using const_iterator = typename Collection::const_iterator;
 
-  Iterator(typename Collection::const_iterator&& position,
-           const Collection& collection_)
-      : position(position), collection(collection_){};
+  const_iterator position;
+  const Collection& collection;
+
+  Iterator(const Collection& collection_)
+      : position(std::begin(collection_)),
+        collection(collection_),
+        begin(std::begin(collection_)){};
+
+  Iterator(const_iterator&& position, const Collection& collection_)
+      : position(position),
+        collection(collection_),
+        begin(std::begin(collection_)){};
 
   const typename Collection::value_type& next() {
+    actualize();
     if (position == std::end(collection)) throw py::stop_iteration();
-    return *position++;
-  }
-
-  Iterator operator+(std::int64_t offset) const {
-    return Iterator(
-        position + (offset < 0
-                        ? std::max(static_cast<std::int64_t>(std::distance(
-                                       position, std::begin(collection))),
-                                   offset)
-                        : std::min(static_cast<std::int64_t>(std::distance(
-                                       position, std::end(collection))),
-                                   offset)),
-        collection);
-  }
-
-  Iterator operator-(std::int64_t offset) const {
-    return Iterator(
-        position - (offset < 0
-                        ? std::max(static_cast<std::int64_t>(std::distance(
-                                       std::end(collection), position)),
-                                   offset)
-                        : std::min(static_cast<std::int64_t>(std::distance(
-                                       std::begin(collection), position)),
-                                   offset)),
-        collection);
-  }
-
-  Iterator& operator+=(std::int64_t offset) {
-    position += (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
-                                           position, std::begin(collection))),
-                                       offset)
-                            : std::min(static_cast<std::int64_t>(std::distance(
-                                           position, std::end(collection))),
-                                       offset));
-    return *this;
-  }
-
-  Iterator& operator-=(std::int64_t offset) {
-    position -= (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
-                                           std::end(collection), position)),
-                                       offset)
-                            : std::min(static_cast<std::int64_t>(std::distance(
-                                           std::begin(collection), position)),
-                                       offset));
-    return *this;
+    auto current_position = position;
+    position = std::next(position);
+    return *current_position;
   }
 
   bool operator==(const Iterator& other) const {
-    return position == other.position;
+    return to_actual_position() == other.to_actual_position();
   }
 
-  bool operator<(const Iterator& other) const {
-    return position < other.position;
+  const_iterator to_actual_position() const {
+    const auto& actual_begin = std::begin(collection);
+    return begin == actual_begin
+               ? position
+               : std::next(actual_begin, std::distance(begin, position));
   }
 
-  bool operator<=(const Iterator& other) const {
-    return position <= other.position;
+  void actualize() {
+    const auto& actual_begin = std::begin(collection);
+    if (begin != actual_begin) {
+      position = std::next(actual_begin, std::distance(begin, position));
+      begin = actual_begin;
+    }
   }
 
  private:
-  typename Collection::const_iterator position;
-  const Collection& collection;
+  const_iterator begin;
 };
+
+template <typename Iterator>
+Iterator iterator_subtract(const Iterator& self, std::int64_t offset) {
+  auto actual_position = self.to_actual_position();
+  return Iterator(
+      actual_position -
+          (offset < 0
+               ? std::max(static_cast<std::int64_t>(std::distance(
+                              std::end(self.collection), actual_position)),
+                          offset)
+               : std::min(static_cast<std::int64_t>(std::distance(
+                              std::begin(self.collection), actual_position)),
+                          offset)),
+      self.collection);
+}
+
+template <typename Iterator>
+Iterator iterator_add(const Iterator& self, std::int64_t offset) {
+  auto actual_position = self.to_actual_position();
+  return Iterator(
+      actual_position +
+          (offset < 0
+               ? std::max(static_cast<std::int64_t>(std::distance(
+                              actual_position, std::begin(self.collection))),
+                          offset)
+               : std::min(static_cast<std::int64_t>(std::distance(
+                              actual_position, std::end(self.collection))),
+                          offset)),
+      self.collection);
+}
+
+template <typename Iterator>
+Iterator& iterator_in_place_add(Iterator& self, std::int64_t offset) {
+  self.actualize();
+  self.position +=
+      (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
+                                 self.position, std::begin(self.collection))),
+                             offset)
+                  : std::min(static_cast<std::int64_t>(std::distance(
+                                 self.position, std::end(self.collection))),
+                             offset));
+  return self;
+}
+
+template <typename Iterator>
+Iterator& iterator_in_place_subtract(Iterator& self, std::int64_t offset) {
+  self.actualize();
+  self.position -=
+      (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
+                                 std::end(self.collection), self.position)),
+                             offset)
+                  : std::min(static_cast<std::int64_t>(std::distance(
+                                 std::begin(self.collection), self.position)),
+                             offset));
+  return self;
+}
 
 template <class Collection>
 static Iterator<Collection> to_iterator(const Collection& collection) {
@@ -140,6 +169,15 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 }  // namespace std
 
 using VectorIterator = Iterator<Vector>;
+
+static bool operator<(const VectorIterator& self, const VectorIterator& other) {
+  return self.position < other.position;
+}
+
+static bool operator<=(const VectorIterator& self,
+                       const VectorIterator& other) {
+  return self.position <= other.position;
+}
 
 PYBIND11_MAKE_OPAQUE(Vector);
 
@@ -200,13 +238,15 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("size"), py::arg("value") = py::none());
 
   py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
-      .def(py::self + std::int64_t())
-      .def(py::self - std::int64_t())
-      .def(py::self += std::int64_t())
-      .def(py::self -= std::int64_t())
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def("__add__", &iterator_add<VectorIterator>, py::is_operator{})
+      .def("__iadd__", &iterator_in_place_add<VectorIterator>,
+           py::is_operator{})
+      .def("__isub__", &iterator_in_place_add<VectorIterator>,
+           py::is_operator{})
       .def("__iter__", [](const VectorIterator& self) { return self; })
-      .def("__next__", &VectorIterator::next);
+      .def("__next__", &VectorIterator::next)
+      .def("__sub__", &iterator_subtract<VectorIterator>, py::is_operator{});
 }
