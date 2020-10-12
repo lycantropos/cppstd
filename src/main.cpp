@@ -216,6 +216,10 @@ namespace pybind11 {
 static std::ostream& operator<<(std::ostream& stream, const Object& object) {
   return stream << std::string(py::repr(object));
 }
+
+static bool operator==(const Object& left, const Object& right) {
+  return left.equal(right);
+}
 }  // namespace pybind11
 
 namespace std {
@@ -272,6 +276,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           result.push_back(py::reinterpret_borrow<Object>(element));
         return result;
       }))
+      .def(py::self == py::self)
       .def("__bool__", [](const Vector& self) { return !self.empty(); })
       .def(
           "__contains__",
