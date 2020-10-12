@@ -185,8 +185,9 @@ static BackwardIterator<Collection> to_backward_iterator(
 template <class Sequence, class Index = std::int64_t>
 static const typename Sequence::value_type& to_item(const Sequence& sequence,
                                                     Index index) {
-  std::int64_t size = to_size(sequence);
-  std::int64_t normalized_index = index >= 0 ? index : index + size;
+  static_assert(std::is_signed_v<Index>, "Index should have signed type.");
+  Index size = to_size(sequence);
+  Index normalized_index = index >= 0 ? index : index + size;
   if (normalized_index < 0 || normalized_index >= size)
     throw std::out_of_range(size ? (std::string("Index should be in range(" +
                                                 std::to_string(-size) + ", ") +
