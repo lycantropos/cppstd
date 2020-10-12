@@ -347,6 +347,63 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
       .def("__reversed__", to_backward_iterator<Vector>)
+      .def(
+          "__setitem__",
+          [](Vector& self, Index index, Object value) {
+            Index size = to_size(self);
+            Index normalized_index = index >= 0 ? index : index + size;
+            if (normalized_index < 0 || normalized_index >= size)
+              throw std::out_of_range(
+                  size ? (std::string("Index should be in range(" +
+                                      std::to_string(-size) + ", ") +
+                          std::to_string(size) + "), but found " +
+                          std::to_string(index) + ".")
+                       : std::string("Sequence is empty."));
+            self[normalized_index] = value;
+          },
+          py::arg("index"), py::arg("value"))
+      .def(
+          "__setitem__",
+          [](Vector& self, py::slice slice, py::iterable iterable) {
+            auto size = self.size();
+            std::size_t raw_start, raw_stop, raw_step, slice_length;
+            if (!slice.compute(size, &raw_start, &raw_stop, &raw_step,
+                               &slice_length))
+              throw py::error_already_set();
+            auto start = static_cast<Index>(raw_start);
+            auto stop = static_cast<Index>(raw_stop);
+            auto step = static_cast<Index>(raw_step);
+            Vector values;
+            auto iterator = py::iter(iterable);
+            while (iterator != py::iterator::sentinel())
+              values.emplace_back(*(iterator++), true);
+            auto values_count = values.size();
+            if (step == 1) {
+              self.resize(start + (size - stop) + values_count, py::none{});
+              if (values_count > slice_length) {
+                auto old_end = std::next(self.begin(), size);
+                for (auto source = std::next(self.begin(), stop),
+                          destination =
+                              std::next(self.begin(), start + values_count);
+                     source != old_end; ++source, ++destination)
+                  std::iter_swap(source, destination);
+              }
+              std::copy(values.begin(), values.end(),
+                        std::next(self.begin(), start));
+              return;
+            }
+            if (slice_length != values_count)
+              throw std::range_error(
+                  std::string("Attempt to assign iterable with capacity ") +
+                  std::to_string(values_count) + " to slice with size " +
+                  std::to_string(slice_length) + ".");
+            auto position = values.begin();
+            if (step < 0)
+              for (; start > stop; start += step) self[start] = *(position++);
+            else
+              for (; start < stop; start += step) self[start] = *(position++);
+          },
+          py::arg("slice"), py::arg("iterable"))
       .def("begin",
            [](const Vector& self) {
              return VectorForwardIterator(self.begin(), self);
