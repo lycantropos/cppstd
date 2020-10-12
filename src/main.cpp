@@ -285,6 +285,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           "push_back",
           [](Vector& self, Object object) { self.push_back(object); },
           py::arg("value"))
+      .def("rbegin",
+           [](const Vector& self) {
+             return VectorBackwardIterator(self.rbegin(), self);
+           })
+      .def("rend",
+           [](const Vector& self) {
+             return VectorBackwardIterator(self.rend(), self);
+           })
       .def("reserve", &Vector::reserve, py::arg("capacity"))
       .def(
           "resize",
