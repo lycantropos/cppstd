@@ -11,6 +11,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define VECTOR_BACKWARD_ITERATOR_NAME "VectorBackwardIterator"
 #define VECTOR_FORWARD_ITERATOR_NAME "VectorForwardIterator"
 #define VECTOR_NAME "Vector"
 #ifndef VERSION_INFO
@@ -164,6 +165,9 @@ class Iterator {
 };
 
 template <class Collection>
+using BackwardIterator = Iterator<Collection, true>;
+
+template <class Collection>
 using ForwardIterator = Iterator<Collection, false>;
 
 template <class Collection>
@@ -198,6 +202,7 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 }
 }  // namespace std
 
+using VectorBackwardIterator = BackwardIterator<Vector>;
 using VectorForwardIterator = ForwardIterator<Vector>;
 
 static bool operator<(const VectorForwardIterator& self,
@@ -205,8 +210,18 @@ static bool operator<(const VectorForwardIterator& self,
   return self.to_actual_position() < other.to_actual_position();
 }
 
+static bool operator<(const VectorBackwardIterator& self,
+                      const VectorBackwardIterator& other) {
+  return self.to_actual_position() < other.to_actual_position();
+}
+
 static bool operator<=(const VectorForwardIterator& self,
                        const VectorForwardIterator& other) {
+  return self.to_actual_position() <= other.to_actual_position();
+}
+
+static bool operator<=(const VectorBackwardIterator& self,
+                       const VectorBackwardIterator& other) {
   return self.to_actual_position() <= other.to_actual_position();
 }
 
@@ -284,4 +299,18 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              return self;
            })
       .def("__next__", &VectorForwardIterator::next);
+
+  py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self + std::int64_t{})
+      .def(py::self - std::int64_t{})
+      .def(py::self += std::int64_t{})
+      .def(py::self -= std::int64_t{})
+      .def("__iter__",
+           [](VectorBackwardIterator& self) -> VectorBackwardIterator& {
+             return self;
+           })
+      .def("__next__", &VectorBackwardIterator::next);
 }
