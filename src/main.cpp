@@ -1,6 +1,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
