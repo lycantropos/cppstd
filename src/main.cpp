@@ -23,11 +23,11 @@ using Vector = std::vector<py::object>;
 using Index = std::int64_t;
 static_assert(std::is_signed_v<Index>, "Index should have signed type.");
 
-template <class Object>
-std::string repr(const Object& object) {
+template <class Type>
+std::string repr(const Type& value) {
   std::ostringstream stream;
   stream.precision(std::numeric_limits<double>::digits10 + 2);
-  stream << object;
+  stream << value;
   return stream.str();
 }
 
@@ -214,10 +214,17 @@ static const typename Sequence::value_type& to_item(const Sequence& sequence,
 namespace std {
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   stream << C_STR(MODULE_NAME) "." VECTOR_NAME "(";
-  if (!vector.empty()) {
-    stream << std::string(py::repr(vector[0]));
-    for (std::size_t index = 1; index < vector.size(); ++index)
-      stream << ", " << std::string(py::repr(vector[index]));
+  auto self = py::cast(vector);
+  if (Py_ReprEnter(self.ptr()) == 0) {
+    for (std::size_t index = 0; index < vector.size(); ++index) {
+      if (index > 0) {
+        stream << ", ";
+      }
+      stream << std::string(py::repr(vector[index]));
+    }
+    Py_ReprLeave(self.ptr());
+  } else {
+    stream << "...";
   }
   return stream << ")";
 }
