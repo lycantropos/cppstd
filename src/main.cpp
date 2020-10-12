@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace py = pybind11;
@@ -10,7 +11,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
-#define VECTOR_ITERATOR_NAME "VectorIterator"
+#define VECTOR_FORWARD_ITERATOR_NAME "VectorForwardIterator"
 #define VECTOR_NAME "Vector"
 #ifndef VERSION_INFO
 #define VERSION_INFO "dev"
@@ -33,112 +34,137 @@ static std::size_t to_size(Sequence& sequence) {
 }
 
 template <class Collection>
+struct ToBegin {
+  typename Collection::const_iterator operator()(
+      const Collection& collection) const {
+    return std::cbegin(collection);
+  }
+};
+
+template <class Collection>
+struct ToEnd {
+  typename Collection::const_iterator operator()(
+      const Collection& collection) const {
+    return std::cend(collection);
+  }
+};
+
+template <class Collection>
+struct ToReversedBegin {
+  typename Collection::const_reverse_iterator operator()(
+      const Collection& collection) const {
+    return std::crbegin(collection);
+  }
+};
+
+template <class Collection>
+struct ToReversedEnd {
+  typename Collection::const_reverse_iterator operator()(
+      const Collection& collection) const {
+    return std::crend(collection);
+  }
+};
+
+template <class Collection, bool reversed>
 class Iterator {
  public:
-  using const_iterator = typename Collection::const_iterator;
-
-  const_iterator position;
-  const Collection& collection;
+  using Position =
+      std::conditional_t<reversed, typename Collection::const_reverse_iterator,
+                         typename Collection::const_iterator>;
 
   Iterator(const Collection& collection_)
-      : position(std::begin(collection_)),
-        collection(collection_),
-        begin(std::begin(collection_)){};
+      : collection(collection_),
+        begin(to_actual_begin()),
+        position(to_actual_begin()){};
 
-  Iterator(const_iterator&& position, const Collection& collection_)
-      : position(position),
-        collection(collection_),
-        begin(std::begin(collection_)){};
+  Iterator(Position&& position, const Collection& collection_)
+      : collection(collection_), begin(to_actual_begin()), position(position){};
 
-  const typename Collection::value_type& next() {
-    actualize();
-    if (position == std::end(collection)) throw py::stop_iteration();
-    auto current_position = position;
-    position = std::next(position);
-    return *current_position;
+  Iterator operator+(std::int64_t offset) const { return to_advanced(offset); }
+
+  Iterator operator-(std::int64_t offset) const { return to_advanced(-offset); }
+
+  Iterator& operator+=(std::int64_t offset) {
+    advance(offset);
+    return *this;
+  }
+
+  Iterator& operator-=(std::int64_t offset) {
+    advance(-offset);
+    return *this;
   }
 
   bool operator==(const Iterator& other) const {
     return to_actual_position() == other.to_actual_position();
   }
 
-  const_iterator to_actual_position() const {
-    const auto& actual_begin = std::begin(collection);
+  const typename Collection::value_type& next() {
+    actualize();
+    if (position == to_actual_end()) throw py::stop_iteration();
+    auto current_position = position;
+    position = std::next(position);
+    return *current_position;
+  }
+
+  Position to_actual_position() const {
+    const auto& actual_begin = to_actual_begin();
     return begin == actual_begin
                ? position
                : std::next(actual_begin, std::distance(begin, position));
   }
 
+ private:
+  using Replenisher = std::conditional_t<reversed, ToReversedBegin<Collection>,
+                                         ToBegin<Collection>>;
+  using Exhauster = std::conditional_t<reversed, ToReversedEnd<Collection>,
+                                       ToEnd<Collection>>;
+  const Collection& collection;
+  Position begin;
+  Position position;
+
   void actualize() {
-    const auto& actual_begin = std::begin(collection);
+    const auto& actual_begin = to_actual_begin();
     if (begin != actual_begin) {
       position = std::next(actual_begin, std::distance(begin, position));
       begin = actual_begin;
     }
   }
 
- private:
-  const_iterator begin;
+  void advance(std::int64_t offset) { position = to_advanced_position(offset); }
+
+  Position to_actual_begin() const {
+    static const Replenisher replenish;
+    return replenish(collection);
+  }
+
+  Position to_actual_end() const {
+    static const Exhauster exhaust;
+    return exhaust(collection);
+  }
+
+  Iterator to_advanced(std::int64_t offset) const {
+    return {to_advanced_position(offset), collection};
+  }
+
+  Position to_advanced_position(std::int64_t offset) const {
+    auto actual_position = to_actual_position();
+    return std::next(actual_position,
+                     offset < 0
+                         ? std::max(static_cast<std::int64_t>(std::distance(
+                                        actual_position, to_actual_begin())),
+                                    offset)
+                         : std::min(static_cast<std::int64_t>(std::distance(
+                                        actual_position, to_actual_end())),
+                                    offset));
+  }
 };
 
-template <typename Iterator>
-Iterator iterator_subtract(const Iterator& self, std::int64_t offset) {
-  auto actual_position = self.to_actual_position();
-  return Iterator(
-      actual_position -
-          (offset < 0
-               ? std::max(static_cast<std::int64_t>(std::distance(
-                              std::end(self.collection), actual_position)),
-                          offset)
-               : std::min(static_cast<std::int64_t>(std::distance(
-                              std::begin(self.collection), actual_position)),
-                          offset)),
-      self.collection);
-}
-
-template <typename Iterator>
-Iterator iterator_add(const Iterator& self, std::int64_t offset) {
-  auto actual_position = self.to_actual_position();
-  return Iterator(
-      actual_position +
-          (offset < 0
-               ? std::max(static_cast<std::int64_t>(std::distance(
-                              actual_position, std::begin(self.collection))),
-                          offset)
-               : std::min(static_cast<std::int64_t>(std::distance(
-                              actual_position, std::end(self.collection))),
-                          offset)),
-      self.collection);
-}
-
-template <typename Iterator>
-Iterator& iterator_in_place_add(Iterator& self, std::int64_t offset) {
-  self.actualize();
-  self.position +=
-      (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
-                                 self.position, std::begin(self.collection))),
-                             offset)
-                  : std::min(static_cast<std::int64_t>(std::distance(
-                                 self.position, std::end(self.collection))),
-                             offset));
-  return self;
-}
-
-template <typename Iterator>
-Iterator& iterator_in_place_subtract(Iterator& self, std::int64_t offset) {
-  self.actualize();
-  self.position -=
-      (offset < 0 ? std::max(static_cast<std::int64_t>(std::distance(
-                                 std::end(self.collection), self.position)),
-                             offset)
-                  : std::min(static_cast<std::int64_t>(std::distance(
-                                 std::begin(self.collection), self.position)),
-                             offset));
-  return self;
-}
+template <class Collection>
+using ForwardIterator = Iterator<Collection, false>;
 
 template <class Collection>
-static Iterator<Collection> to_iterator(const Collection& collection) {
+static ForwardIterator<Collection> to_forward_iterator(
+    const Collection& collection) {
   return {collection};
 }
 
@@ -168,15 +194,16 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 }
 }  // namespace std
 
-using VectorIterator = Iterator<Vector>;
+using VectorForwardIterator = ForwardIterator<Vector>;
 
-static bool operator<(const VectorIterator& self, const VectorIterator& other) {
-  return self.position < other.position;
+static bool operator<(const VectorForwardIterator& self,
+                      const VectorForwardIterator& other) {
+  return self.to_actual_position() < other.to_actual_position();
 }
 
-static bool operator<=(const VectorIterator& self,
-                       const VectorIterator& other) {
-  return self.position <= other.position;
+static bool operator<=(const VectorForwardIterator& self,
+                       const VectorForwardIterator& other) {
+  return self.to_actual_position() <= other.to_actual_position();
 }
 
 PYBIND11_MAKE_OPAQUE(Vector);
@@ -212,14 +239,17 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             return result;
           },
           py::arg("slice"))
-      .def("__iter__", to_iterator<Vector>)
+      .def("__iter__", to_forward_iterator<Vector>)
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
-      .def(
-          "begin",
-          [](const Vector& self) { return VectorIterator(self.begin(), self); })
+      .def("begin",
+           [](const Vector& self) {
+             return VectorForwardIterator(self.begin(), self);
+           })
       .def("end",
-           [](const Vector& self) { return VectorIterator(self.end(), self); })
+           [](const Vector& self) {
+             return VectorForwardIterator(self.end(), self);
+           })
       .def("pop_back",
            [](Vector& self) {
              if (self.empty()) throw std::out_of_range("Vector is empty.");
@@ -237,16 +267,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           },
           py::arg("size"), py::arg("value") = py::none());
 
-  py::class_<VectorIterator>(m, VECTOR_ITERATOR_NAME)
+  py::class_<VectorForwardIterator>(m, VECTOR_FORWARD_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
-      .def("__add__", &iterator_add<VectorIterator>, py::is_operator{})
-      .def("__iadd__", &iterator_in_place_add<VectorIterator>,
-           py::is_operator{})
-      .def("__isub__", &iterator_in_place_add<VectorIterator>,
-           py::is_operator{})
-      .def("__iter__", [](const VectorIterator& self) { return self; })
-      .def("__next__", &VectorIterator::next)
-      .def("__sub__", &iterator_subtract<VectorIterator>, py::is_operator{});
+      .def(py::self + std::int64_t{})
+      .def(py::self - std::int64_t{})
+      .def(py::self += std::int64_t{})
+      .def(py::self -= std::int64_t{})
+      .def("__iter__", [](const VectorForwardIterator& self) { return self; })
+      .def("__next__", &VectorForwardIterator::next);
 }
