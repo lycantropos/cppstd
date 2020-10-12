@@ -211,23 +211,23 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 using VectorBackwardIterator = BackwardIterator<Vector>;
 using VectorForwardIterator = ForwardIterator<Vector>;
 
-static bool operator<(const VectorForwardIterator& self,
-                      const VectorForwardIterator& other) {
-  return self.to_actual_position() < other.to_actual_position();
-}
-
 static bool operator<(const VectorBackwardIterator& self,
                       const VectorBackwardIterator& other) {
   return self.to_actual_position() < other.to_actual_position();
 }
 
-static bool operator<=(const VectorForwardIterator& self,
-                       const VectorForwardIterator& other) {
-  return self.to_actual_position() <= other.to_actual_position();
+static bool operator<(const VectorForwardIterator& self,
+                      const VectorForwardIterator& other) {
+  return self.to_actual_position() < other.to_actual_position();
 }
 
 static bool operator<=(const VectorBackwardIterator& self,
                        const VectorBackwardIterator& other) {
+  return self.to_actual_position() <= other.to_actual_position();
+}
+
+static bool operator<=(const VectorForwardIterator& self,
+                       const VectorForwardIterator& other) {
   return self.to_actual_position() <= other.to_actual_position();
 }
 
@@ -301,20 +301,6 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           },
           py::arg("size"), py::arg("value") = py::none());
 
-  py::class_<VectorForwardIterator>(m, VECTOR_FORWARD_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self < py::self)
-      .def(py::self <= py::self)
-      .def(py::self + std::int64_t{})
-      .def(py::self - std::int64_t{})
-      .def(py::self += std::int64_t{})
-      .def(py::self -= std::int64_t{})
-      .def("__iter__",
-           [](VectorForwardIterator& self) -> VectorForwardIterator& {
-             return self;
-           })
-      .def("__next__", &VectorForwardIterator::next);
-
   py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self < py::self)
@@ -328,4 +314,18 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              return self;
            })
       .def("__next__", &VectorBackwardIterator::next);
+
+  py::class_<VectorForwardIterator>(m, VECTOR_FORWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self + std::int64_t{})
+      .def(py::self - std::int64_t{})
+      .def(py::self += std::int64_t{})
+      .def(py::self -= std::int64_t{})
+      .def("__iter__",
+           [](VectorForwardIterator& self) -> VectorForwardIterator& {
+             return self;
+           })
+      .def("__next__", &VectorForwardIterator::next);
 }
