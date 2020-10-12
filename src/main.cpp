@@ -221,14 +221,14 @@ static std::ostream& operator<<(std::ostream& stream, const Object& object) {
 namespace std {
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   stream << C_STR(MODULE_NAME) "." VECTOR_NAME "(";
-  auto self = py::cast(vector);
-  if (Py_ReprEnter(self.ptr()) == 0) {
+  auto object = py::cast(vector);
+  if (Py_ReprEnter(object.ptr()) == 0) {
     if (!vector.empty()) {
       stream << vector[0];
       for (std::size_t index = 1; index < vector.size(); ++index)
         stream << ", " << vector[index];
     }
-    Py_ReprLeave(self.ptr());
+    Py_ReprLeave(object.ptr());
   } else {
     stream << "...";
   }
