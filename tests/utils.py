@@ -15,6 +15,10 @@ Strategy = SearchStrategy
 BoundVector = BoundVector
 
 
+def equivalence(left: bool, right: bool) -> bool:
+    return left is right
+
+
 def identity(value: Domain) -> Domain:
     return value
 
