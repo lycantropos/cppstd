@@ -28,9 +28,9 @@ std::string repr(const Object& object) {
   return stream.str();
 }
 
-template <class Sequence>
-static std::size_t to_size(Sequence& sequence) {
-  return sequence.size();
+template <class Collection>
+static std::size_t to_size(Collection& collection) {
+  return collection.size();
 }
 
 template <class Collection>
