@@ -211,16 +211,21 @@ static const typename Sequence::value_type& to_item(const Sequence& sequence,
   return sequence[normalized_index];
 }
 
+namespace pybind11 {
+static std::ostream& operator<<(std::ostream& stream, const Object& object) {
+  return stream << std::string(py::repr(object));
+}
+}  // namespace pybind11
+
 namespace std {
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   stream << C_STR(MODULE_NAME) "." VECTOR_NAME "(";
   auto self = py::cast(vector);
   if (Py_ReprEnter(self.ptr()) == 0) {
-    for (std::size_t index = 0; index < vector.size(); ++index) {
-      if (index > 0) {
-        stream << ", ";
-      }
-      stream << std::string(py::repr(vector[index]));
+    if (!vector.empty()) {
+      stream << vector[0];
+      for (std::size_t index = 1; index < vector.size(); ++index)
+        stream << ", " << vector[index];
     }
     Py_ReprLeave(self.ptr());
   } else {
