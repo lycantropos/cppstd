@@ -248,7 +248,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__getitem__", to_item<Vector>, py::arg("index"))
       .def(
           "__getitem__",
-          [](Vector& self, py::slice slice) {
+          [](const Vector& self, py::slice slice) {
             std::size_t raw_start, raw_stop, raw_step, slice_length;
             if (!slice.compute(self.size(), &raw_start, &raw_stop, &raw_step,
                                &slice_length))
