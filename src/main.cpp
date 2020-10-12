@@ -259,6 +259,12 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           result.push_back(py::reinterpret_borrow<Object>(element));
         return result;
       }))
+      .def(
+          "__contains__",
+          [](const Vector& self, Object value) {
+            return std::find(self.begin(), self.end(), value) != self.end();
+          },
+          py::arg("value"), py::is_operator{})
       .def("__delitem__", delete_item<Vector>, py::arg("index"))
       .def(
           "__delitem__",
