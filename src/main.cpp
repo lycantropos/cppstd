@@ -275,6 +275,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self - std::int64_t{})
       .def(py::self += std::int64_t{})
       .def(py::self -= std::int64_t{})
-      .def("__iter__", [](const VectorForwardIterator& self) { return self; })
+      .def("__iter__",
+           [](VectorForwardIterator& self) -> VectorForwardIterator& {
+             return self;
+           })
       .def("__next__", &VectorForwardIterator::next);
 }
