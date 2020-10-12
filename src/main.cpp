@@ -20,6 +20,8 @@ namespace py = pybind11;
 
 using Object = py::object;
 using Vector = std::vector<py::object>;
+using Index = std::int64_t;
+static_assert(std::is_signed_v<Index>, "Index should have signed type.");
 
 template <class Object>
 std::string repr(const Object& object) {
@@ -81,16 +83,16 @@ class Iterator {
   Iterator(Position&& position, const Collection& collection_)
       : collection(collection_), begin(to_actual_begin()), position(position){};
 
-  Iterator operator+(std::int64_t offset) const { return to_advanced(offset); }
+  Iterator operator+(Index offset) const { return to_advanced(offset); }
 
-  Iterator operator-(std::int64_t offset) const { return to_advanced(-offset); }
+  Iterator operator-(Index offset) const { return to_advanced(-offset); }
 
-  Iterator& operator+=(std::int64_t offset) {
+  Iterator& operator+=(Index offset) {
     advance(offset);
     return *this;
   }
 
-  Iterator& operator-=(std::int64_t offset) {
+  Iterator& operator-=(Index offset) {
     advance(-offset);
     return *this;
   }
@@ -131,7 +133,7 @@ class Iterator {
     }
   }
 
-  void advance(std::int64_t offset) { position = to_advanced_position(offset); }
+  void advance(Index offset) { position = to_advanced_position(offset); }
 
   Position to_actual_begin() const {
     static const Replenisher replenish;
@@ -143,16 +145,16 @@ class Iterator {
     return exhaust(collection);
   }
 
-  Iterator to_advanced(std::int64_t offset) const {
+  Iterator to_advanced(Index offset) const {
     return {to_advanced_position(offset), collection};
   }
 
-  Position to_advanced_position(std::int64_t offset) const {
+  Position to_advanced_position(Index offset) const {
     auto actual_position = to_actual_position();
-    std::int64_t min_offset = std::distance(actual_position, to_actual_begin());
-    std::int64_t max_offset = std::distance(actual_position, to_actual_end());
+    Index min_offset = std::distance(actual_position, to_actual_begin());
+    Index max_offset = std::distance(actual_position, to_actual_end());
     if (offset < min_offset || offset > max_offset) {
-      std::int64_t size = to_size(collection);
+      Index size = to_size(collection);
       throw std::out_of_range(
           size ? (std::string("Offset should be in range(" +
                               std::to_string(min_offset) + ", ") +
@@ -182,10 +184,9 @@ static BackwardIterator<Collection> to_backward_iterator(
   return {collection};
 }
 
-template <class Sequence, class Index = std::int64_t>
+template <class Sequence>
 static const typename Sequence::value_type& to_item(const Sequence& sequence,
                                                     Index index) {
-  static_assert(std::is_signed_v<Index>, "Index should have signed type.");
   Index size = to_size(sequence);
   Index normalized_index = index >= 0 ? index : index + size;
   if (normalized_index < 0 || normalized_index >= size)
@@ -253,9 +254,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             if (!slice.compute(self.size(), &raw_start, &raw_stop, &raw_step,
                                &slice_length))
               throw py::error_already_set();
-            auto start = static_cast<std::int64_t>(raw_start);
-            auto stop = static_cast<std::int64_t>(raw_stop);
-            auto step = static_cast<std::int64_t>(raw_step);
+            auto start = static_cast<Index>(raw_start);
+            auto stop = static_cast<Index>(raw_stop);
+            auto step = static_cast<Index>(raw_step);
             Vector result;
             result.reserve(slice_length);
             if (step < 0)
@@ -306,10 +307,10 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
-      .def(py::self + std::int64_t{})
-      .def(py::self - std::int64_t{})
-      .def(py::self += std::int64_t{})
-      .def(py::self -= std::int64_t{})
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
       .def("__iter__",
            [](VectorBackwardIterator& self) -> VectorBackwardIterator& {
              return self;
@@ -320,10 +321,10 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
-      .def(py::self + std::int64_t{})
-      .def(py::self - std::int64_t{})
-      .def(py::self += std::int64_t{})
-      .def(py::self -= std::int64_t{})
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
       .def("__iter__",
            [](VectorForwardIterator& self) -> VectorForwardIterator& {
              return self;
