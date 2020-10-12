@@ -176,6 +176,12 @@ static ForwardIterator<Collection> to_forward_iterator(
   return {collection};
 }
 
+template <class Collection>
+static BackwardIterator<Collection> to_backward_iterator(
+    const Collection& collection) {
+  return {collection};
+}
+
 template <class Sequence, class Index = std::int64_t>
 static const typename Sequence::value_type& to_item(const Sequence& sequence,
                                                     Index index) {
@@ -261,6 +267,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__iter__", to_forward_iterator<Vector>)
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
+      .def("__reversed__", to_backward_iterator<Vector>)
       .def("begin",
            [](const Vector& self) {
              return VectorForwardIterator(self.begin(), self);
