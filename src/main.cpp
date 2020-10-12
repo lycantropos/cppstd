@@ -148,14 +148,18 @@ class Iterator {
 
   Position to_advanced_position(std::int64_t offset) const {
     auto actual_position = to_actual_position();
-    return std::next(actual_position,
-                     offset < 0
-                         ? std::max(static_cast<std::int64_t>(std::distance(
-                                        actual_position, to_actual_begin())),
-                                    offset)
-                         : std::min(static_cast<std::int64_t>(std::distance(
-                                        actual_position, to_actual_end())),
-                                    offset));
+    std::int64_t min_offset = std::distance(actual_position, to_actual_begin());
+    std::int64_t max_offset = std::distance(actual_position, to_actual_end());
+    if (offset < min_offset || offset > max_offset) {
+      std::int64_t size = to_size(collection);
+      throw std::out_of_range(
+          size ? (std::string("Offset should be in range(" +
+                              std::to_string(min_offset) + ", ") +
+                  std::to_string(max_offset + 1) + "), but found " +
+                  std::to_string(offset) + ".")
+               : std::string("Sequence is empty."));
+    }
+    return std::next(actual_position, offset);
   }
 };
 
