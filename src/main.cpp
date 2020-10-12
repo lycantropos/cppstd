@@ -272,6 +272,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           result.push_back(py::reinterpret_borrow<Object>(element));
         return result;
       }))
+      .def("__bool__", [](const Vector& self) { return !self.empty(); })
       .def(
           "__contains__",
           [](const Vector& self, Object value) {
