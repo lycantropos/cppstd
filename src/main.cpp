@@ -139,7 +139,7 @@ Iterator& iterator_in_place_subtract(Iterator& self, std::int64_t offset) {
 
 template <class Collection>
 static Iterator<Collection> to_iterator(const Collection& collection) {
-  return Iterator(collection);
+  return {collection};
 }
 
 template <class Sequence, class Index = std::int64_t>
