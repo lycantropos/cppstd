@@ -408,7 +408,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             else
               for (; start < stop; start += step) self[start] = *(position++);
           },
-          py::arg("slice"), py::arg("iterable"))
+          py::arg("slice"), py::arg("values"))
       .def("begin",
            [](const Vector& self) {
              return VectorForwardIterator(self.begin(), self);
