@@ -430,6 +430,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            [](const Vector& self) {
              return VectorForwardIterator(self.begin(), self);
            })
+      .def("clear", &Vector::clear)
       .def("end",
            [](const Vector& self) {
              return VectorForwardIterator(self.end(), self);
