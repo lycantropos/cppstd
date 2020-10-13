@@ -1,3 +1,4 @@
+import sys
 from typing import (Generic,
                     Iterable,
                     Iterator,
@@ -71,6 +72,12 @@ class Vector(Generic[Domain]):
 
     def end(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(len(self), self)
+
+    def index(self,
+              value: Domain,
+              start: int = 0,
+              stop: int = sys.maxsize) -> int:
+        return self._values.index(value, start, stop)
 
     def insert(self, index: int, value: Domain) -> None:
         self._values.insert(index, value)
