@@ -52,5 +52,10 @@ class Vector(Generic[Domain]):
     def __setitem__(self, item, value):
         self._values[item] = value
 
-    def push_back(self, value: Domain) -> None:
+    def append(self, value: Domain) -> None:
         self._values.append(value)
+
+    def insert(self, index: int, value: Domain) -> None:
+        self._values.insert(index, value)
+
+    push_back = append
