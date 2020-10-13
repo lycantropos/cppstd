@@ -481,6 +481,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             self.erase(position);
           },
           py::arg("value"))
+      .def("reverse",
+           [](Vector& self) { std::reverse(self.begin(), self.end()); })
       .def(
           "push_back",
           [](Vector& self, Object value) { self.push_back(value); },
