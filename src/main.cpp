@@ -329,7 +329,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             auto start = static_cast<Index>(raw_start);
             auto stop = static_cast<Index>(raw_stop);
             auto step = static_cast<Index>(raw_step);
-            if (step == 1)
+            if (step > 0 ? start >= stop : start <= stop)
+              return;
+            else if (step == 1)
               self.erase(std::next(self.begin(), start),
                          std::next(self.begin(), stop));
             else if (step == -1)
