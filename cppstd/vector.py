@@ -80,6 +80,9 @@ class Vector(Generic[Domain]):
     def rbegin(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(0, self)
 
+    def remove(self, value: Domain) -> None:
+        self._values.remove(value)
+
     def rend(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(len(self), self)
 
