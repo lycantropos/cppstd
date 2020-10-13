@@ -17,8 +17,8 @@ def test_index(pair_with_index: Tuple[BoundPortedVectorsPair, int]) -> None:
 
 
 @given(strategies.non_empty_vectors_pairs_with_slices)
-def test_slice(pair_with_index: Tuple[BoundPortedVectorsPair, int]) -> None:
-    (bound, ported), slice_ = pair_with_index
+def test_slice(pair_with_slice: Tuple[BoundPortedVectorsPair, int]) -> None:
+    (bound, ported), slice_ = pair_with_slice
 
     bound_result, ported_result = bound[slice_], ported[slice_]
 
