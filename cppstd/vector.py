@@ -1,6 +1,7 @@
 from typing import (Generic,
                     List,
-                    Union)
+                    Union,
+                    overload)
 
 from reprit.base import (generate_repr,
                          seekers)
@@ -24,6 +25,17 @@ class Vector(Generic[Domain]):
         return (self._values == other._values
                 if isinstance(other, Vector)
                 else NotImplemented)
+
+    @overload
+    def __getitem__(self, item: int) -> Domain:
+        """Returns element by given index."""
+
+    @overload
+    def __getitem__(self, item: slice) -> 'Vector[Domain]':
+        """Returns subvector by given slice."""
+
+    def __getitem__(self, item):
+        return self._values[item]
 
     def __len__(self) -> int:
         return len(self._values)
