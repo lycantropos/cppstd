@@ -425,6 +425,13 @@ PYBIND11_MODULE(MODULE_NAME, m) {
                           static_cast<Index>(0));
              self.insert(std::next(self.begin(), normalized_index), value);
            })
+      .def("pop",
+           [](Vector& self) {
+             if (self.empty()) throw std::out_of_range("Vector is empty.");
+             auto result = self.back();
+             self.pop_back();
+             return result;
+           })
       .def("pop_back",
            [](Vector& self) {
              if (self.empty()) throw std::out_of_range("Vector is empty.");
