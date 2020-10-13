@@ -447,6 +447,12 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              return VectorForwardIterator(self.end(), self);
            })
       .def("extend", extend_sequence<Vector>)
+      .def(
+          "index",
+          [](const Vector& self, Object value) {
+            return std::distance(self.begin(), to_position(self, value));
+          },
+          py::arg("value"))
       .def("insert",
            [](Vector& self, Index index, Object value) {
              Index size = self.size();
