@@ -158,8 +158,8 @@ class Iterator {
     if (offset < min_offset || offset > max_offset) {
       Index size = to_size(collection);
       throw std::out_of_range(
-          size ? (std::string("Offset should be in range(" +
-                              std::to_string(min_offset) + ", ") +
+          size ? (std::string("Offset should be in range(") +
+                  std::to_string(min_offset) + ", " +
                   std::to_string(max_offset + 1) + "), but found " +
                   std::to_string(offset) + ".")
                : std::string("Sequence is empty."));
