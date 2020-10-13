@@ -2,6 +2,7 @@ from typing import (Generic,
                     Iterable,
                     Iterator,
                     List,
+                    Optional,
                     Union,
                     overload)
 
@@ -81,6 +82,10 @@ class Vector(Generic[Domain]):
 
     def rend(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(len(self), self)
+
+    def resize(self, size: int, value: Optional[Domain] = None) -> None:
+        self._values = (self._values
+                        + [value] * (size - len(self._values)))[:size]
 
     def reverse(self) -> None:
         self._values.reverse()
