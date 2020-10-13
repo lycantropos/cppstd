@@ -75,13 +75,13 @@ class Vector(Generic[Domain]):
     def insert(self, index: int, value: Domain) -> None:
         self._values.insert(index, value)
 
-    push_back = append
-
     def pop(self, index: int = -1) -> None:
         return self._values.pop(index)
 
     def pop_back(self) -> None:
         del self._values[-1]
+
+    push_back = append
 
     def rbegin(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(0, self)
