@@ -1,5 +1,6 @@
 from typing import (Generic,
-                    List)
+                    List,
+                    Union)
 
 from reprit.base import (generate_repr,
                          seekers)
@@ -15,6 +16,9 @@ class Vector(Generic[Domain]):
 
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
+
+    def __delitem__(self, item: Union[int, slice]) -> None:
+        del self._values[item]
 
     def __eq__(self, other: 'Vector') -> bool:
         return (self._values == other._values
