@@ -517,14 +517,6 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              self.pop_back();
            })
       .def(
-          "remove",
-          [](Vector& self, Object value) {
-            self.erase(to_position(self, value));
-          },
-          py::arg("value"))
-      .def("reverse",
-           [](Vector& self) { std::reverse(self.begin(), self.end()); })
-      .def(
           "push_back",
           [](Vector& self, Object value) { self.push_back(value); },
           py::arg("value"))
@@ -532,6 +524,12 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            [](const Vector& self) {
              return VectorBackwardIterator(self.rbegin(), self);
            })
+      .def(
+          "remove",
+          [](Vector& self, Object value) {
+            self.erase(to_position(self, value));
+          },
+          py::arg("value"))
       .def("rend",
            [](const Vector& self) {
              return VectorBackwardIterator(self.rend(), self);
@@ -542,7 +540,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           [](Vector& self, std::size_t size, Object value) {
             self.resize(size, value);
           },
-          py::arg("size"), py::arg("value") = py::none());
+          py::arg("size"), py::arg("value") = py::none())
+      .def("reverse",
+           [](Vector& self) { std::reverse(self.begin(), self.end()); });
 
   py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
