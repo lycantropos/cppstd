@@ -442,6 +442,12 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              return VectorForwardIterator(self.begin(), self);
            })
       .def("clear", &Vector::clear)
+      .def(
+          "count",
+          [](const Vector& self, Object value) {
+            return std::count(self.begin(), self.end(), value);
+          },
+          py::arg("value"))
       .def("end",
            [](const Vector& self) {
              return VectorForwardIterator(self.end(), self);
