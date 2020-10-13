@@ -22,6 +22,10 @@ def equivalence(left: bool, right: bool) -> bool:
     return left is right
 
 
+def implication(left: bool, right: bool) -> bool:
+    return not left or right
+
+
 def identity(value: Domain) -> Domain:
     return value
 
