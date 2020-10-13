@@ -25,6 +25,9 @@ class Vector(Generic[Domain]):
     def __bool__(self) -> bool:
         return bool(self._values)
 
+    def __contains__(self, value: Domain) -> bool:
+        return value in self._values
+
     def __delitem__(self, item: Union[int, slice]) -> None:
         del self._values[item]
 
