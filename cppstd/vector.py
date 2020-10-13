@@ -73,6 +73,9 @@ class Vector(Generic[Domain]):
     def begin(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(0, self)
 
+    def count(self, value: Domain) -> int:
+        return self._values.count(value)
+
     def end(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(len(self), self)
 
