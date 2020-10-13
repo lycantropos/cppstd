@@ -417,6 +417,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            [](const Vector& self) {
              return VectorForwardIterator(self.end(), self);
            })
+      .def("insert",
+           [](Vector& self, Index index, Object value) {
+             Index size = self.size();
+             std::size_t normalized_index =
+                 std::max(std::min(index >= 0 ? index : index + size, size),
+                          static_cast<Index>(0));
+             self.insert(std::next(self.begin(), normalized_index), value);
+           })
       .def("pop_back",
            [](Vector& self) {
              if (self.empty()) throw std::out_of_range("Vector is empty.");
