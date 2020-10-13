@@ -1,4 +1,5 @@
 from typing import (Generic,
+                    Iterable,
                     List,
                     Union,
                     overload)
@@ -39,6 +40,17 @@ class Vector(Generic[Domain]):
 
     def __len__(self) -> int:
         return len(self._values)
+
+    @overload
+    def __setitem__(self, item: int, value: Domain) -> None:
+        """Sets element by given index to given value."""
+
+    @overload
+    def __setitem__(self, item: slice, values: Iterable[Domain]) -> None:
+        """Sets subvector by given slice to given values."""
+
+    def __setitem__(self, item, value):
+        self._values[item] = value
 
     def push_back(self, value: Domain) -> None:
         self._values.append(value)
