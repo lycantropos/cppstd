@@ -453,7 +453,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            [](const Vector& self) {
              return VectorForwardIterator(self.end(), self);
            })
-      .def("extend", extend_sequence<Vector>)
+      .def("extend", extend_sequence<Vector>, py::arg("values"))
       .def(
           "index",
           [](const Vector& self, Object value, Index start, Index stop) {
