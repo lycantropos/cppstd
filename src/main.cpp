@@ -23,7 +23,7 @@ namespace py = pybind11;
 
 using Object = py::object;
 using Vector = std::vector<py::object>;
-using Index = std::int64_t;
+using Index = int;
 static_assert(std::is_signed_v<Index>, "Index should have signed type.");
 
 template <class T>
