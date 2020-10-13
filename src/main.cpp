@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -24,6 +25,11 @@ using Object = py::object;
 using Vector = std::vector<py::object>;
 using Index = std::int64_t;
 static_assert(std::is_signed_v<Index>, "Index should have signed type.");
+
+template <class T>
+static bool are_addresses_equal(const T& left, const T& right) {
+  return std::addressof(left) == std::addressof(right);
+}
 
 template <class Type>
 std::string repr(const Type& value) {
@@ -116,6 +122,10 @@ class Iterator {
     return begin == actual_begin
                ? position
                : std::next(actual_begin, std::distance(begin, position));
+  }
+
+  bool has_same_collection_with(const Iterator<Collection, reversed>& other) const {
+    return are_addresses_equal(collection, other.collection);
   }
 
  private:
@@ -264,22 +274,26 @@ using VectorForwardIterator = ForwardIterator<Vector>;
 
 static bool operator<(const VectorBackwardIterator& self,
                       const VectorBackwardIterator& other) {
-  return self.to_actual_position() < other.to_actual_position();
+  return self.has_same_collection_with(other) &&
+         self.to_actual_position() < other.to_actual_position();
 }
 
 static bool operator<(const VectorForwardIterator& self,
                       const VectorForwardIterator& other) {
-  return self.to_actual_position() < other.to_actual_position();
+  return self.has_same_collection_with(other) &&
+         self.to_actual_position() < other.to_actual_position();
 }
 
 static bool operator<=(const VectorBackwardIterator& self,
                        const VectorBackwardIterator& other) {
-  return self.to_actual_position() <= other.to_actual_position();
+  return self.has_same_collection_with(other) &&
+         self.to_actual_position() <= other.to_actual_position();
 }
 
 static bool operator<=(const VectorForwardIterator& self,
                        const VectorForwardIterator& other) {
-  return self.to_actual_position() <= other.to_actual_position();
+  return self.has_same_collection_with(other) &&
+         self.to_actual_position() <= other.to_actual_position();
 }
 
 PYBIND11_MAKE_OPAQUE(Vector);
