@@ -373,7 +373,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             extend_sequence(self, iterable);
             return self;
           },
-          py::is_operator{})
+          py::is_operator{}, py::arg("values"))
       .def("__iter__", to_forward_iterator<Vector>)
       .def("__len__", to_size<Vector>)
       .def("__repr__", repr<Vector>)
