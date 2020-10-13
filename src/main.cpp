@@ -443,13 +443,28 @@ PYBIND11_MODULE(MODULE_NAME, m) {
                           static_cast<Index>(0));
              self.insert(std::next(self.begin(), normalized_index), value);
            })
-      .def("pop",
-           [](Vector& self) {
-             if (self.empty()) throw std::out_of_range("Vector is empty.");
-             auto result = self.back();
-             self.pop_back();
-             return result;
-           })
+      .def(
+          "pop",
+          [](Vector& self, Index index) {
+            Index size = self.size();
+            Index normalized_index = index >= 0 ? index : index + size;
+            if (normalized_index < 0 || normalized_index >= size)
+              throw std::out_of_range(
+                  size ? (std::string("Index should be in range(" +
+                                      std::to_string(-size) + ", ") +
+                          std::to_string(size) + "), but found " +
+                          std::to_string(index) + ".")
+                       : std::string("Vector is empty."));
+            if (normalized_index == size - 1) {
+              auto result = self.back();
+              self.pop_back();
+              return result;
+            }
+            auto result = self[normalized_index];
+            self.erase(std::next(self.begin(), normalized_index));
+            return result;
+          },
+          py::arg("index") = -1)
       .def("pop_back",
            [](Vector& self) {
              if (self.empty()) throw std::out_of_range("Vector is empty.");
