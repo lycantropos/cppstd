@@ -5,6 +5,7 @@ from operator import eq
 from typing import (Any,
                     Callable,
                     Iterable,
+                    List,
                     Tuple,
                     TypeVar)
 
@@ -55,3 +56,7 @@ def capacity(iterable: Iterable[Any]) -> int:
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
     return len(bound) == len(ported) and all(map(eq, bound, ported))
+
+
+def to_bound_ported_vectors_pair(objects: List[Any]) -> BoundPortedVectorsPair:
+    return BoundVector(*objects), PortedVector(*objects)
