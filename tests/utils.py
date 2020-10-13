@@ -9,10 +9,13 @@ from typing import (Any,
 from _cppstd import Vector as BoundVector
 from hypothesis.strategies import SearchStrategy
 
+from cppstd.vector import Vector as PortedVector
+
 Domain = TypeVar('Domain')
 Range = TypeVar('Range')
 Strategy = SearchStrategy
 BoundVector = BoundVector
+PortedVector = PortedVector
 
 
 def equivalence(left: bool, right: bool) -> bool:
