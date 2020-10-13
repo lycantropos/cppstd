@@ -82,6 +82,9 @@ class Vector(Generic[Domain]):
     def rend(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(len(self), self)
 
+    def reverse(self) -> None:
+        self._values.reverse()
+
 
 class VectorBackwardIterator(Iterator[Domain]):
     __slots__ = '_index', '_vector'
