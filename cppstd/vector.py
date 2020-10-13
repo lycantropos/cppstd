@@ -21,5 +21,8 @@ class Vector(Generic[Domain]):
                 if isinstance(other, Vector)
                 else NotImplemented)
 
+    def __len__(self) -> int:
+        return len(self._values)
+
     def push_back(self, value: Domain) -> None:
         self._values.append(value)
