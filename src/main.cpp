@@ -185,6 +185,13 @@ static BackwardIterator<Collection> to_backward_iterator(
   return {collection};
 }
 
+template <class Sequence>
+static void extend_sequence(Sequence& sequence, py::iterable iterable) {
+  auto iterator = py::iter(iterable);
+  while (iterator != py::iterator::sentinel())
+    sequence.emplace_back(*(iterator++), true);
+}
+
 template <class Collection>
 static void delete_item(Collection& collection, Index index) {
   Index size = to_size(collection);
@@ -417,6 +424,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            [](const Vector& self) {
              return VectorForwardIterator(self.end(), self);
            })
+      .def("extend", extend_sequence<Vector>)
       .def("insert",
            [](Vector& self, Index index, Object value) {
              Index size = self.size();
