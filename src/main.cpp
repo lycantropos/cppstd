@@ -481,14 +481,16 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           },
           py::arg("value"), py::arg("start") = 0,
           py::arg("stop") = std::numeric_limits<Index>::max())
-      .def("insert",
-           [](Vector& self, Index index, Object value) {
-             Index size = self.size();
-             std::size_t normalized_index =
-                 std::max(std::min(index >= 0 ? index : index + size, size),
-                          static_cast<Index>(0));
-             self.insert(std::next(self.begin(), normalized_index), value);
-           })
+      .def(
+          "insert",
+          [](Vector& self, Index index, Object value) {
+            Index size = self.size();
+            std::size_t normalized_index =
+                std::max(std::min(index >= 0 ? index : index + size, size),
+                         static_cast<Index>(0));
+            self.insert(std::next(self.begin(), normalized_index), value);
+          },
+          py::arg("index"), py::arg("value"))
       .def(
           "pop",
           [](Vector& self, Index index) {
