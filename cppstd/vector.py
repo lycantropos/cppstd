@@ -76,6 +76,9 @@ class Vector(Generic[Domain]):
     def end(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(len(self), self)
 
+    def extend(self, values: Iterable[Domain]) -> None:
+        self._values.extend(values)
+
     def index(self,
               value: Domain,
               start: int = 0,
