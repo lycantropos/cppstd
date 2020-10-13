@@ -77,6 +77,9 @@ class Vector(Generic[Domain]):
 
     push_back = append
 
+    def pop(self, index: int = -1) -> None:
+        return self._values.pop(index)
+
     def pop_back(self) -> None:
         del self._values[-1]
 
