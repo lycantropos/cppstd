@@ -456,6 +456,17 @@ PYBIND11_MODULE(MODULE_NAME, m) {
              self.pop_back();
            })
       .def(
+          "remove",
+          [](Vector& self, Object value) {
+            const auto& end = self.end();
+            const auto& position = std::find(self.begin(), end, value);
+            if (position == end)
+              throw std::invalid_argument(std::string(py::repr(value)) +
+                                          " is not found.");
+            self.erase(position);
+          },
+          py::arg("value"))
+      .def(
           "push_back",
           [](Vector& self, Object value) { self.push_back(value); },
           py::arg("value"))
