@@ -77,6 +77,9 @@ class Vector(Generic[Domain]):
 
     push_back = append
 
+    def pop_back(self) -> None:
+        del self._values[-1]
+
     def rbegin(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(0, self)
 
