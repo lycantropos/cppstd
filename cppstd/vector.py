@@ -20,6 +20,9 @@ class Vector(Generic[Domain]):
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
 
+    def __bool__(self) -> bool:
+        return bool(self._values)
+
     def __delitem__(self, item: Union[int, slice]) -> None:
         del self._values[item]
 
