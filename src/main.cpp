@@ -423,6 +423,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               for (; start < stop; start += step) self[start] = *(position++);
           },
           py::arg("slice"), py::arg("values"))
+      .def(
+          "append", [](Vector& self, Object value) { self.push_back(value); },
+          py::arg("value"))
       .def("begin",
            [](const Vector& self) {
              return VectorForwardIterator(self.begin(), self);
@@ -454,7 +457,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            })
       .def(
           "push_back",
-          [](Vector& self, Object object) { self.push_back(object); },
+          [](Vector& self, Object value) { self.push_back(value); },
           py::arg("value"))
       .def("rbegin",
            [](const Vector& self) {
