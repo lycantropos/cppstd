@@ -219,6 +219,17 @@ static const typename Sequence::value_type& to_item(const Sequence& sequence,
   return sequence[normalized_index];
 }
 
+template <class Sequence>
+static const typename Sequence::const_iterator to_position(
+    const Sequence& sequence, const typename Sequence::value_type& value) {
+  const auto& end = std::end(sequence);
+  const auto& position = std::find(sequence.begin(), end, value);
+  if (position == end) {
+    throw std::invalid_argument(repr(value) + " is not found.");
+  }
+  return position;
+}
+
 namespace pybind11 {
 static std::ostream& operator<<(std::ostream& stream, const Object& object) {
   return stream << std::string(py::repr(object));
@@ -474,12 +485,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(
           "remove",
           [](Vector& self, Object value) {
-            const auto& end = self.end();
-            const auto& position = std::find(self.begin(), end, value);
-            if (position == end)
-              throw std::invalid_argument(std::string(py::repr(value)) +
-                                          " is not found.");
-            self.erase(position);
+            self.erase(to_position(self, value));
           },
           py::arg("value"))
       .def("reverse",
