@@ -1,9 +1,11 @@
 from collections import deque
 from functools import partial
 from itertools import count
+from operator import eq
 from typing import (Any,
                     Callable,
                     Iterable,
+                    Tuple,
                     TypeVar)
 
 from _cppstd import Vector as BoundVector
@@ -16,6 +18,7 @@ Range = TypeVar('Range')
 Strategy = SearchStrategy
 BoundVector = BoundVector
 PortedVector = PortedVector
+BoundPortedVectorsPair = Tuple[BoundVector, PortedVector]
 
 
 def equivalence(left: bool, right: bool) -> bool:
@@ -47,3 +50,8 @@ def capacity(iterable: Iterable[Any]) -> int:
     deque(zip(iterable, counter),
           maxlen=0)
     return next(counter)
+
+
+def are_bound_ported_vectors_equal(bound: BoundVector,
+                                   ported: PortedVector) -> bool:
+    return len(bound) == len(ported) and all(map(eq, bound, ported))
