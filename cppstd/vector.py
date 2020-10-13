@@ -137,6 +137,16 @@ class VectorBackwardIterator(Iterator[Domain]):
     def __iter__(self) -> 'VectorBackwardIterator[Domain]':
         return self
 
+    def __le__(self, other: 'VectorBackwardIterator[Domain]') -> bool:
+        return (self._vector is other._vector and self._index <= other._index
+                if isinstance(other, VectorBackwardIterator)
+                else NotImplemented)
+
+    def __lt__(self, other: 'VectorBackwardIterator[Domain]') -> bool:
+        return (self._vector is other._vector and self._index < other._index
+                if isinstance(other, VectorBackwardIterator)
+                else NotImplemented)
+
     def __next__(self) -> Domain:
         try:
             result = self._vector[-self._index - 1]
@@ -184,6 +194,16 @@ class VectorForwardIterator(Iterator[Domain]):
 
     def __iter__(self) -> 'VectorForwardIterator[Domain]':
         return self
+
+    def __le__(self, other: 'VectorForwardIterator[Domain]') -> bool:
+        return (self._vector is other._vector and self._index <= other._index
+                if isinstance(other, VectorForwardIterator)
+                else NotImplemented)
+
+    def __lt__(self, other: 'VectorForwardIterator[Domain]') -> bool:
+        return (self._vector is other._vector and self._index < other._index
+                if isinstance(other, VectorForwardIterator)
+                else NotImplemented)
 
     def __next__(self) -> Domain:
         try:
