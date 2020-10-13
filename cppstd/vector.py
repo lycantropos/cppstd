@@ -45,7 +45,9 @@ class Vector(Generic[Domain]):
         """Returns subvector by given slice."""
 
     def __getitem__(self, item):
-        return self._values[item]
+        return (self._values[item]
+                if isinstance(item, int)
+                else Vector(*self._values[item]))
 
     def __iter__(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(0, self)
