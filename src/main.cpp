@@ -556,7 +556,11 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("reserve", &Vector::reserve, py::arg("capacity"))
       .def(
           "resize",
-          [](Vector& self, std::size_t size, Object value) {
+          [](Vector& self, Index size, Object value) {
+            if (size < 0)
+              throw py::value_error(
+                  std::string("Size should be positive, but found ") +
+                  std::to_string(size) + ".");
             self.resize(size, value);
           },
           py::arg("size"), py::arg("value") = py::none())
