@@ -60,8 +60,11 @@ def to_non_empty_vectors_pairs_with_starts_stops_and_their_elements(
     pair = to_bound_ported_vectors_pair(values)
     size = len(values)
     start = draw(strategies.integers(MIN_INDEX, size - 1))
-    stop = draw(strategies.integers(max(-size, start) + 1, MAX_INDEX)
-                .filter(bool))
+    min_positive_stop = max(-size, start) % size + 1
+    stops = strategies.integers(min_positive_stop, MAX_INDEX)
+    stop = draw(stops | strategies.integers(min_positive_stop % -size, -1)
+                if min_positive_stop < size
+                else stops)
     return pair, start, stop, draw(strategies.sampled_from(values[start:stop]))
 
 
