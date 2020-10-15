@@ -1,3 +1,4 @@
+import sys
 from typing import (Any,
                     Callable,
                     List,
@@ -34,6 +35,20 @@ def to_non_empty_vectors_pairs_with_indices(
 
 non_empty_vectors_pairs_with_indices = (
     non_empty_vectors_pairs.flatmap(to_non_empty_vectors_pairs_with_indices))
+
+
+def to_vectors_pairs_with_invalid_indices(
+        pair: BoundPortedVectorsPair
+) -> Strategy[Tuple[BoundPortedVectorsPair, int]]:
+    bound, _ = pair
+    size = len(bound)
+    return strategies.tuples(strategies.just(pair),
+                             strategies.integers(-sys.maxsize, -size - 1)
+                             | strategies.integers(size + 1, sys.maxsize))
+
+
+vectors_pairs_with_invalid_indices = (
+    vectors_pairs.flatmap(to_vectors_pairs_with_invalid_indices))
 
 
 def to_vectors_pairs_with_slices(
