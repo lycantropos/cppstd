@@ -24,7 +24,6 @@ namespace py = pybind11;
 using Object = py::object;
 using Vector = std::vector<py::object>;
 using Index = Py_ssize_t;
-static_assert(std::is_signed_v<Index>, "Index should have signed type.");
 
 template <class T>
 static bool are_addresses_equal(const T& left, const T& right) {
