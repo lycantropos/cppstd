@@ -111,6 +111,9 @@ class Vector(Generic[Domain]):
         return VectorBackwardIterator(len(self), self)
 
     def resize(self, size: int, value: Optional[Domain] = None) -> None:
+        if size < 0:
+            raise ValueError('Size should be positive, but found {}.'
+                             .format(size))
         self._values = (self._values
                         + [value] * (size - len(self._values)))[:size]
 
