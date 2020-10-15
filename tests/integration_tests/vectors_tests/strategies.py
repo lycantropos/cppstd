@@ -32,7 +32,7 @@ non_empty_vectors_pairs_with_indices = (
     non_empty_vectors_pairs.flatmap(to_non_empty_vectors_pairs_with_indices))
 
 
-def to_non_empty_vectors_pairs_with_slices(
+def to_vectors_pairs_with_slices(
         pair: BoundPortedVectorsPair
 ) -> Strategy[Tuple[BoundPortedVectorsPair, slice]]:
     bound, _ = pair
@@ -40,5 +40,5 @@ def to_non_empty_vectors_pairs_with_slices(
     return strategies.tuples(strategies.just(pair), strategies.slices(size))
 
 
-non_empty_vectors_pairs_with_slices = (
-    non_empty_vectors_pairs.flatmap(to_non_empty_vectors_pairs_with_slices))
+vectors_pairs_with_slices = (vectors_pairs
+                             .flatmap(to_vectors_pairs_with_slices))
