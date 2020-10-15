@@ -43,7 +43,7 @@ def to_vectors_pairs_with_invalid_indices(
     bound, _ = pair
     size = len(bound)
     return strategies.tuples(strategies.just(pair),
-                             strategies.integers(-sys.maxsize, -size - 1)
+                             strategies.integers(-sys.maxsize - 1, -size - 1)
                              | strategies.integers(size + 1, sys.maxsize))
 
 
