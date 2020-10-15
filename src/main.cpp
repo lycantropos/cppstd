@@ -208,11 +208,11 @@ static void delete_item(Collection& collection, Index index) {
   Index size = to_size(collection);
   Index normalized_index = index >= 0 ? index : index + size;
   if (normalized_index < 0 || normalized_index >= size)
-    throw std::out_of_range(size ? (std::string("Index should be in range(" +
-                                                std::to_string(-size) + ", ") +
-                                    std::to_string(size) + "), but found " +
-                                    std::to_string(index) + ".")
-                                 : std::string("Sequence is empty."));
+    throw py::index_error(size ? (std::string("Index should be in range(" +
+                                              std::to_string(-size) + ", ") +
+                                  std::to_string(size) + "), but found " +
+                                  std::to_string(index) + ".")
+                               : std::string("Sequence is empty."));
   collection.erase(std::next(std::begin(collection), normalized_index));
 }
 
@@ -222,11 +222,11 @@ static const typename Sequence::value_type& to_item(const Sequence& sequence,
   Index size = to_size(sequence);
   Index normalized_index = index >= 0 ? index : index + size;
   if (normalized_index < 0 || normalized_index >= size)
-    throw std::out_of_range(size ? (std::string("Index should be in range(" +
-                                                std::to_string(-size) + ", ") +
-                                    std::to_string(size) + "), but found " +
-                                    std::to_string(index) + ".")
-                                 : std::string("Sequence is empty."));
+    throw py::index_error(size ? (std::string("Index should be in range(" +
+                                              std::to_string(-size) + ", ") +
+                                  std::to_string(size) + "), but found " +
+                                  std::to_string(index) + ".")
+                               : std::string("Sequence is empty."));
   return sequence[normalized_index];
 }
 
@@ -236,7 +236,7 @@ static const typename Sequence::const_iterator to_position(
   const auto& end = std::end(sequence);
   const auto& position = std::find(sequence.begin(), end, value);
   if (position == end) {
-    throw std::invalid_argument(repr(value) + " is not found.");
+    throw py::value_error(repr(value) + " is not found.");
   }
   return position;
 }
@@ -400,7 +400,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             Index size = to_size(self);
             Index normalized_index = index >= 0 ? index : index + size;
             if (normalized_index < 0 || normalized_index >= size)
-              throw std::out_of_range(
+              throw py::index_error(
                   size ? (std::string("Index should be in range(" +
                                       std::to_string(-size) + ", ") +
                           std::to_string(size) + "), but found " +
@@ -448,7 +448,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               return;
             }
             if (slice_length != values_count)
-              throw std::range_error(
+              throw py::value_error(
                   std::string("Attempt to assign iterable with capacity ") +
                   std::to_string(values_count) + " to slice with size " +
                   std::to_string(slice_length) + ".");
@@ -491,10 +491,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             for (Index index = normalized_start; index < normalized_stop;
                  ++index)
               if (self[index] == value) return index;
-            throw std::invalid_argument(
-                repr(value) + " is not found in slice(" +
-                std::to_string(normalized_start) + ", " +
-                std::to_string(normalized_stop) + ").");
+            throw py::value_error(repr(value) + " is not found in slice(" +
+                                  std::to_string(normalized_start) + ", " +
+                                  std::to_string(normalized_stop) + ").");
           },
           py::arg("value"), py::arg("start") = 0,
           py::arg("stop") = std::numeric_limits<Index>::max())
@@ -514,7 +513,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             Index size = self.size();
             Index normalized_index = index >= 0 ? index : index + size;
             if (normalized_index < 0 || normalized_index >= size)
-              throw std::out_of_range(
+              throw py::index_error(
                   size ? (std::string("Index should be in range(" +
                                       std::to_string(-size) + ", ") +
                           std::to_string(size) + "), but found " +
@@ -532,7 +531,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("index") = -1)
       .def("pop_back",
            [](Vector& self) {
-             if (self.empty()) throw std::out_of_range("Vector is empty.");
+             if (self.empty()) throw py::index_error("Vector is empty.");
              self.pop_back();
            })
       .def(
