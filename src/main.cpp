@@ -124,7 +124,8 @@ class Iterator {
                : std::next(actual_begin, std::distance(begin, position));
   }
 
-  bool has_same_collection_with(const Iterator<Collection, reversed>& other) const {
+  bool has_same_collection_with(
+      const Iterator<Collection, reversed>& other) const {
     return are_addresses_equal(collection, other.collection);
   }
 
