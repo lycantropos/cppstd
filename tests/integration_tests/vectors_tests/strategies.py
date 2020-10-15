@@ -70,6 +70,25 @@ non_empty_vectors_pairs_with_starts_stops_and_their_elements = (
             to_non_empty_vectors_pairs_with_starts_stops_and_their_elements))
 
 
+@strategies.composite
+def to_vectors_pairs_with_starts_stops_and_non_their_elements(
+        draw: Callable[[Strategy[Domain]], Domain],
+        values: List[Any]
+) -> Strategy[Tuple[BoundPortedVectorsPair, int, int, Any]]:
+    pair = to_bound_ported_vectors_pair(values)
+    start, stop = draw(indices), draw(indices)
+    sub_values = values[start:stop]
+    return (pair, start, stop,
+            draw(objects.filter(lambda candidate: candidate not in sub_values)
+                 if sub_values
+                 else objects))
+
+
+vectors_pairs_with_starts_stops_and_non_their_elements = (
+    (objects_lists
+     .flatmap(to_vectors_pairs_with_starts_stops_and_non_their_elements)))
+
+
 def to_non_empty_vectors_pairs_with_indices(
         pair: BoundPortedVectorsPair
 ) -> Strategy[Tuple[BoundPortedVectorsPair, int]]:
