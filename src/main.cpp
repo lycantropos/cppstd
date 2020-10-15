@@ -426,8 +426,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               values.emplace_back(*(iterator++), true);
             auto values_count = values.size();
             if (step == 1) {
-              self.resize(start + (size - stop) + values_count, py::none{});
               if (values_count > slice_length) {
+                self.resize(start + (size - stop) + values_count, py::none{});
                 auto old_end = std::next(self.begin(), size);
                 for (auto source = std::next(self.begin(), stop),
                           destination =
