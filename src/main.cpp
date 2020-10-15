@@ -330,8 +330,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       }))
       .def("__repr__", repr<Set>);
 
-  py::class_<Vector>(m, VECTOR_NAME)
-      .def(py::init([](py::args args) {
+  py::class_<Vector> PyVector(m, VECTOR_NAME);
+      PyVector.def(py::init([](py::args args) {
         Vector result;
         result.reserve(args.size());
         for (auto& element : args)
@@ -594,6 +594,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("size"), py::arg("value") = py::none())
       .def("reverse",
            [](Vector& self) { std::reverse(self.begin(), self.end()); });
+
+  py::module collections_abc = py::module::import("collections.abc");
+  collections_abc.attr("MutableSequence").attr("register")(PyVector);
 
   py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
