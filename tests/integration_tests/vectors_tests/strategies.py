@@ -1,8 +1,12 @@
-from typing import Tuple
+from typing import (Any,
+                    Callable,
+                    List,
+                    Tuple)
 
 from hypothesis import strategies
 
 from tests.utils import (BoundPortedVectorsPair,
+                         Domain,
                          Strategy,
                          to_bound_ported_vectors_pair)
 
@@ -42,3 +46,25 @@ def to_vectors_pairs_with_slices(
 
 vectors_pairs_with_slices = (vectors_pairs
                              .flatmap(to_vectors_pairs_with_slices))
+
+
+@strategies.composite
+def to_vectors_pairs_with_slices_and_iterables_pairs(
+        draw: Callable[[Strategy[Domain]], Domain],
+        pair: BoundPortedVectorsPair
+) -> Strategy[Tuple[BoundPortedVectorsPair, slice, List[Any]]]:
+    bound, _ = pair
+    size = len(bound)
+    slice_ = draw(strategies.slices(size))
+    slice_size = len(bound[slice_])
+    return pair, slice_, draw(strategies.lists(objects,
+                                               min_size=slice_size,
+                                               max_size=(None
+                                                         if slice_.step == 1
+                                                         else slice_size))
+                              if slice_size
+                              else empty_lists)
+
+
+vectors_pairs_with_slices_and_objects_lists = (
+    vectors_pairs.flatmap(to_vectors_pairs_with_slices_and_iterables_pairs))
