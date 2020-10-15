@@ -57,11 +57,11 @@ def to_vectors_pairs_with_slices_and_iterables_pairs(
     size = len(bound)
     slice_ = draw(strategies.slices(size))
     slice_size = len(bound[slice_])
-    return pair, slice_, draw(strategies.lists(objects,
-                                               min_size=slice_size,
-                                               max_size=(None
-                                                         if slice_.step == 1
-                                                         else slice_size))
+    return pair, slice_, draw((objects_lists
+                               if slice_.step == 1
+                               else strategies.lists(objects,
+                                                     min_size=slice_size,
+                                                     max_size=slice_size))
                               if slice_size
                               else empty_lists)
 
