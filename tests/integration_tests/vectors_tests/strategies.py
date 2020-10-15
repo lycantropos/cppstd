@@ -11,6 +11,9 @@ from tests.utils import (BoundPortedVectorsPair,
                          Strategy,
                          to_bound_ported_vectors_pair)
 
+MAX_INDEX = sys.maxsize
+MIN_INDEX = -MAX_INDEX - 1
+indices = strategies.integers(MIN_INDEX, MAX_INDEX)
 objects = strategies.integers()
 empty_lists = strategies.builds(list)
 objects_lists = strategies.lists(objects)
@@ -43,8 +46,8 @@ def to_vectors_pairs_with_invalid_indices(
     bound, _ = pair
     size = len(bound)
     return strategies.tuples(strategies.just(pair),
-                             strategies.integers(-sys.maxsize - 1, -size - 1)
-                             | strategies.integers(size + 1, sys.maxsize))
+                             strategies.integers(MIN_INDEX, -size - 1)
+                             | strategies.integers(size + 1, MAX_INDEX))
 
 
 vectors_pairs_with_invalid_indices = (
