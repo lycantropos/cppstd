@@ -427,14 +427,22 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               values.emplace_back(*(iterator++), true);
             auto values_count = values.size();
             if (step == 1) {
-              if (values_count > slice_length) {
-                auto new_size = start + (size - stop) + values_count;
+              auto new_size = size - slice_length + values_count;
+              if (new_size > size) {
                 self.resize(new_size, py::none{});
                 const auto& last_replaced = std::next(self.begin(), stop - 1);
                 for (auto source = std::next(self.begin(), size - 1),
                           destination = std::next(self.begin(), new_size - 1);
                      source != last_replaced; --source, --destination)
                   std::iter_swap(source, destination);
+              } else if (new_size < size) {
+                const auto& old_end = self.end();
+                for (auto source = std::next(self.begin(), stop),
+                          destination =
+                              std::next(self.begin(), start + values_count);
+                     source != old_end; ++source, ++destination)
+                  std::iter_swap(source, destination);
+                self.erase(std::next(self.begin(), new_size), old_end);
               }
               std::copy(values.begin(), values.end(),
                         std::next(self.begin(), start));
