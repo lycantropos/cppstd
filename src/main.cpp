@@ -23,8 +23,7 @@ namespace py = pybind11;
 
 using Object = py::object;
 using Vector = std::vector<py::object>;
-using Index =
-    std::conditional_t<sizeof(void*) == 4, std::int32_t, std::int64_t>;
+using Index = Py_ssize_t;
 static_assert(std::is_signed_v<Index>, "Index should have signed type.");
 
 template <class T>
