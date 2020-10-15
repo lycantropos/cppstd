@@ -38,6 +38,20 @@ non_empty_vectors_pairs_with_their_elements = non_empty_objects_lists.flatmap(
         to_non_empty_vectors_pairs_with_their_elements)
 
 
+def to_vectors_pairs_with_non_their_elements(
+        values: List[Any]) -> Strategy[Tuple[BoundPortedVectorsPair, Any]]:
+    pair = to_bound_ported_vectors_pair(values)
+    return strategies.tuples(strategies.just(pair),
+                             objects.filter(lambda candidate
+                                            : candidate not in values)
+                             if values
+                             else objects)
+
+
+vectors_pairs_with_non_their_elements = (
+    objects_lists.flatmap(to_vectors_pairs_with_non_their_elements))
+
+
 @strategies.composite
 def to_non_empty_vectors_pairs_with_starts_stops_and_their_elements(
         draw: Callable[[Strategy[Domain]], Domain],
