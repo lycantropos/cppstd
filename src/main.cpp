@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -14,6 +15,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define SET_NAME "Set"
 #define VECTOR_BACKWARD_ITERATOR_NAME "VectorBackwardIterator"
 #define VECTOR_FORWARD_ITERATOR_NAME "VectorForwardIterator"
 #define VECTOR_NAME "Vector"
@@ -22,6 +24,7 @@ namespace py = pybind11;
 #endif
 
 using Object = py::object;
+using Set = std::set<py::object>;
 using Vector = std::vector<py::object>;
 using Index = Py_ssize_t;
 
@@ -301,6 +304,13 @@ PYBIND11_MAKE_OPAQUE(Vector);
 PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
   m.attr("__version__") = VERSION_INFO;
+
+  py::class_<Set>(m, SET_NAME).def(py::init([](py::args args) {
+    Set result;
+    for (auto& element : args)
+      result.insert(py::reinterpret_borrow<Object>(element));
+    return result;
+  }));
 
   py::class_<Vector>(m, VECTOR_NAME)
       .def(py::init([](py::args args) {
