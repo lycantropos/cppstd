@@ -14,6 +14,8 @@ from tests.utils import (BoundPortedVectorsPair,
 MAX_INDEX = sys.maxsize
 MIN_INDEX = -MAX_INDEX - 1
 indices = strategies.integers(MIN_INDEX, MAX_INDEX)
+sizes = strategies.integers(0, min(100, sys.maxsize))
+invalid_sizes = strategies.integers(MIN_INDEX, -1)
 objects = strategies.integers()
 empty_lists = strategies.builds(list)
 objects_lists = strategies.lists(objects)
