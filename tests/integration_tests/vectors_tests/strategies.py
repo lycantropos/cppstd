@@ -27,6 +27,35 @@ non_empty_vectors_pairs = strategies.builds(to_bound_ported_vectors_pair,
                                             non_empty_objects_lists)
 
 
+def to_non_empty_vectors_pairs_with_their_elements(
+        values: List[Any]) -> Strategy[Tuple[BoundPortedVectorsPair, Any]]:
+    pair = to_bound_ported_vectors_pair(values)
+    return strategies.tuples(strategies.just(pair),
+                             strategies.sampled_from(values))
+
+
+non_empty_vectors_pairs_with_their_elements = non_empty_objects_lists.flatmap(
+        to_non_empty_vectors_pairs_with_their_elements)
+
+
+@strategies.composite
+def to_non_empty_vectors_pairs_with_starts_stops_and_their_elements(
+        draw: Callable[[Strategy[Domain]], Domain],
+        values: List[Any]
+) -> Strategy[Tuple[BoundPortedVectorsPair, int, int, Any]]:
+    pair = to_bound_ported_vectors_pair(values)
+    size = len(values)
+    start = draw(strategies.integers(MIN_INDEX, size - 1))
+    stop = draw(strategies.integers(max(-size, start) + 1, MAX_INDEX)
+                .filter(bool))
+    return pair, start, stop, draw(strategies.sampled_from(values[start:stop]))
+
+
+non_empty_vectors_pairs_with_starts_stops_and_their_elements = (
+    non_empty_objects_lists.flatmap(
+            to_non_empty_vectors_pairs_with_starts_stops_and_their_elements))
+
+
 def to_non_empty_vectors_pairs_with_indices(
         pair: BoundPortedVectorsPair
 ) -> Strategy[Tuple[BoundPortedVectorsPair, int]]:
@@ -36,8 +65,8 @@ def to_non_empty_vectors_pairs_with_indices(
                              strategies.integers(-size, size - 1))
 
 
-non_empty_vectors_pairs_with_indices = (
-    non_empty_vectors_pairs.flatmap(to_non_empty_vectors_pairs_with_indices))
+non_empty_vectors_pairs_with_indices = non_empty_vectors_pairs.flatmap(
+        to_non_empty_vectors_pairs_with_indices)
 
 
 def to_vectors_pairs_with_invalid_indices(
@@ -50,8 +79,8 @@ def to_vectors_pairs_with_invalid_indices(
                              | strategies.integers(size + 1, MAX_INDEX))
 
 
-vectors_pairs_with_invalid_indices = (
-    vectors_pairs.flatmap(to_vectors_pairs_with_invalid_indices))
+vectors_pairs_with_invalid_indices = vectors_pairs.flatmap(
+        to_vectors_pairs_with_invalid_indices)
 
 
 def to_vectors_pairs_with_slices(
@@ -84,5 +113,5 @@ def to_vectors_pairs_with_slices_and_iterables_pairs(
                               else empty_lists)
 
 
-vectors_pairs_with_slices_and_objects_lists = (
-    vectors_pairs.flatmap(to_vectors_pairs_with_slices_and_iterables_pairs))
+vectors_pairs_with_slices_and_objects_lists = vectors_pairs.flatmap(
+        to_vectors_pairs_with_slices_and_iterables_pairs)
