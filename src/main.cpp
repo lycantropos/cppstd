@@ -328,6 +328,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           result.insert(py::reinterpret_borrow<Object>(element));
         return result;
       }))
+      .def(py::self == py::self)
       .def("__repr__", repr<Set>);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
