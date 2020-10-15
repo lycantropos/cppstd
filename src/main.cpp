@@ -255,6 +255,22 @@ static bool operator==(const Object& left, const Object& right) {
 }  // namespace pybind11
 
 namespace std {
+static std::ostream& operator<<(std::ostream& stream, const Set& set) {
+  stream << C_STR(MODULE_NAME) "." SET_NAME "(";
+  auto object = py::cast(set);
+  if (Py_ReprEnter(object.ptr()) == 0) {
+    if (!set.empty()) {
+      auto position = set.cbegin();
+      stream << *(position++);
+      for (; position != set.end(); ++position) stream << ", " << *position;
+    }
+    Py_ReprLeave(object.ptr());
+  } else {
+    stream << "...";
+  }
+  return stream << ")";
+}
+
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   stream << C_STR(MODULE_NAME) "." VECTOR_NAME "(";
   auto object = py::cast(vector);
@@ -305,12 +321,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
   m.attr("__version__") = VERSION_INFO;
 
-  py::class_<Set>(m, SET_NAME).def(py::init([](py::args args) {
-    Set result;
-    for (auto& element : args)
-      result.insert(py::reinterpret_borrow<Object>(element));
-    return result;
-  }));
+  py::class_<Set>(m, SET_NAME)
+      .def(py::init([](py::args args) {
+        Set result;
+        for (auto& element : args)
+          result.insert(py::reinterpret_borrow<Object>(element));
+        return result;
+      }))
+      .def("__repr__", repr<Set>);
 
   py::class_<Vector>(m, VECTOR_NAME)
       .def(py::init([](py::args args) {
