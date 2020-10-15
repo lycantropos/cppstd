@@ -482,26 +482,19 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           "index",
           [](const Vector& self, Object value, Index start, Index stop) {
             Index size = self.size();
-            std::size_t normalized_start =
+            auto normalized_start =
                 std::max(std::min(start >= 0 ? start : start + size, size),
                          static_cast<Index>(0));
-            std::size_t normalized_stop =
+            auto normalized_stop =
                 std::max(std::min(stop >= 0 ? stop : stop + size, size),
                          static_cast<Index>(0));
-            if (normalized_start >= normalized_stop)
-              throw std::invalid_argument(
-                  repr(value) + " is not found in slice(" +
-                  std::to_string(normalized_start) + ", " +
-                  std::to_string(normalized_stop) + ").");
-            const auto& end = std::next(self.begin(), normalized_stop);
-            const auto& position = std::find(
-                std::next(self.begin(), normalized_start), end, value);
-            if (position == end)
-              throw std::invalid_argument(
-                  repr(value) + " is not found in slice(" +
-                  std::to_string(normalized_start) + ", " +
-                  std::to_string(normalized_stop) + ").");
-            return std::distance(self.begin(), position);
+            for (Index index = normalized_start; index < normalized_stop;
+                 ++index)
+              if (self[index] == value) return index;
+            throw std::invalid_argument(
+                repr(value) + " is not found in slice(" +
+                std::to_string(normalized_start) + ", " +
+                std::to_string(normalized_stop) + ").");
           },
           py::arg("value"), py::arg("start") = 0,
           py::arg("stop") = std::numeric_limits<Index>::max())
