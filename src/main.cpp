@@ -167,12 +167,12 @@ class Iterator {
     Index max_offset = std::distance(actual_position, to_actual_end());
     if (offset < min_offset || offset > max_offset) {
       Index size = to_size(collection);
-      throw std::out_of_range(
-          size ? (std::string("Offset should be in range(") +
-                  std::to_string(min_offset) + ", " +
-                  std::to_string(max_offset + 1) + "), but found " +
-                  std::to_string(offset) + ".")
-               : std::string("Sequence is empty."));
+      throw py::value_error(size ? (std::string("Offset should be in range(") +
+                                    std::to_string(min_offset) + ", " +
+                                    std::to_string(max_offset + 1) +
+                                    "), but found " + std::to_string(offset) +
+                                    ".")
+                                 : std::string("Sequence is empty."));
     }
     return std::next(actual_position, offset);
   }
