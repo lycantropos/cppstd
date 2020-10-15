@@ -305,6 +305,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
   py::class_<Vector>(m, VECTOR_NAME)
       .def(py::init([](py::args args) {
         Vector result;
+        result.reserve(args.size());
         for (auto& element : args)
           result.push_back(py::reinterpret_borrow<Object>(element));
         return result;
