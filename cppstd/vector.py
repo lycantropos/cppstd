@@ -1,4 +1,5 @@
 import sys
+from collections import abc
 from typing import (Generic,
                     Iterable,
                     Iterator,
@@ -13,6 +14,7 @@ from reprit.base import (generate_repr,
 from .hints import Domain
 
 
+@abc.MutableSequence.register
 class Vector(Generic[Domain]):
     __slots__ = '_values'
 
