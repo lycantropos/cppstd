@@ -265,6 +265,10 @@ static bool operator<(const Vector& left, const Vector& right) {
                                       right.end());
 }
 
+static bool operator<=(const Vector& left, const Vector& right) {
+  return left < right || left == right;
+}
+
 static std::ostream& operator<<(std::ostream& stream, const Set& set) {
   stream << C_STR(MODULE_NAME) "." SET_NAME "(";
   auto object = py::cast(set);
@@ -365,6 +369,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
+      .def(py::self <= py::self)
       .def(py::self < py::self)
       .def(py::pickle(
           [](const Vector& self) {  // __getstate__
