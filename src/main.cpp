@@ -15,6 +15,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
 #define SET_FORWARD_ITERATOR_NAME "SetForwardIterator"
 #define SET_NAME "Set"
 #define VECTOR_BACKWARD_ITERATOR_NAME "VectorBackwardIterator"
@@ -303,6 +304,7 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 }
 }  // namespace std
 
+using SetBackwardIterator = BackwardIterator<Set>;
 using SetForwardIterator = ForwardIterator<Set>;
 using VectorBackwardIterator = BackwardIterator<Vector>;
 using VectorForwardIterator = ForwardIterator<Vector>;
@@ -361,7 +363,20 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__bool__", has_elements<Set>)
       .def("__iter__", to_forward_iterator<Set>)
       .def("__len__", to_size<Set>)
-      .def("__repr__", repr<Set>);
+      .def("__repr__", repr<Set>)
+      .def("__reversed__", to_backward_iterator<Set>);
+
+  py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](SetBackwardIterator& self) -> SetBackwardIterator& {
+             return self;
+           })
+      .def("__next__", &SetBackwardIterator::next);
 
   py::class_<SetForwardIterator>(m, SET_FORWARD_ITERATOR_NAME)
       .def(py::self == py::self)
@@ -370,9 +385,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self += Index{})
       .def(py::self -= Index{})
       .def("__iter__",
-           [](SetForwardIterator& self) -> SetForwardIterator& {
-             return self;
-           })
+           [](SetForwardIterator& self) -> SetForwardIterator& { return self; })
       .def("__next__", &SetForwardIterator::next);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
