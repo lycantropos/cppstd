@@ -335,7 +335,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       }))
       .def(py::self == py::self)
       .def("__bool__", &has_elements<Set>, py::is_operator{})
-      .def("__repr__", repr<Set>);
+      .def("__repr__", repr<Set>, py::is_operator{});
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
   PyVector
