@@ -57,6 +57,11 @@ class Vector(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def __lt__(self, other: 'Vector') -> bool:
+        return (self._values < other._values
+                if isinstance(other, Vector)
+                else NotImplemented)
+
     def __reversed__(self) -> 'VectorBackwardIterator[Domain]':
         return VectorBackwardIterator(0, self)
 
