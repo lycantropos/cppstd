@@ -1,1 +1,2 @@
+dendroid>=1.1.0
 reprit>=0.2.2
