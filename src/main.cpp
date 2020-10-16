@@ -356,7 +356,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               result.insert(py::reinterpret_borrow<Object>(element));
             return result;
           }))
-      .def("__bool__", &has_elements<Set>)
+      .def("__bool__", has_elements<Set>)
       .def("__repr__", repr<Set>);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
@@ -384,7 +384,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               result.push_back(py::reinterpret_borrow<Object>(element));
             return result;
           }))
-      .def("__bool__", &has_elements<Vector>)
+      .def("__bool__", has_elements<Vector>)
       .def(
           "__contains__",
           [](const Vector& self, Object value) {
