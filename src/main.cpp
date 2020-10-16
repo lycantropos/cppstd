@@ -334,8 +334,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
-      .def("__bool__", &has_elements<Set>, py::is_operator{})
-      .def("__repr__", repr<Set>, py::is_operator{});
+      .def("__bool__", &has_elements<Set>)
+      .def("__repr__", repr<Set>);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
   PyVector
@@ -347,15 +347,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
-      .def("__bool__", &has_elements<Vector>, py::is_operator{})
+      .def("__bool__", &has_elements<Vector>)
       .def(
           "__contains__",
           [](const Vector& self, Object value) {
             return std::find(self.begin(), self.end(), value) != self.end();
           },
-          py::arg("value"), py::is_operator{})
-      .def("__delitem__", delete_item<Vector>, py::arg("index"),
-           py::is_operator{})
+          py::arg("value"))
+      .def("__delitem__", delete_item<Vector>, py::arg("index"))
       .def(
           "__delitem__",
           [](Vector& self, py::slice slice) {
@@ -400,8 +399,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               self.assign(result.rbegin(), result.rend());
             }
           },
-          py::arg("slice"), py::is_operator{})
-      .def("__getitem__", to_item<Vector>, py::arg("index"), py::is_operator{})
+          py::arg("slice"))
+      .def("__getitem__", to_item<Vector>, py::arg("index"))
       .def(
           "__getitem__",
           [](const Vector& self, py::slice slice) {
@@ -420,7 +419,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
               for (; start < stop; start += step) result.push_back(self[start]);
             return result;
           },
-          py::arg("slice"), py::is_operator{})
+          py::arg("slice"))
       .def(
           "__iadd__",
           [](Vector& self, py::iterable iterable) {
@@ -428,10 +427,10 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             return self;
           },
           py::arg("values"), py::is_operator{})
-      .def("__iter__", to_forward_iterator<Vector>, py::is_operator{})
-      .def("__len__", to_size<Vector>, py::is_operator{})
-      .def("__repr__", repr<Vector>, py::is_operator{})
-      .def("__reversed__", to_backward_iterator<Vector>, py::is_operator{})
+      .def("__iter__", to_forward_iterator<Vector>)
+      .def("__len__", to_size<Vector>)
+      .def("__repr__", repr<Vector>)
+      .def("__reversed__", to_backward_iterator<Vector>)
       .def(
           "__setitem__",
           [](Vector& self, Index index, Object value) {
@@ -446,7 +445,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
                        : std::string("Sequence is empty."));
             self[normalized_index] = value;
           },
-          py::arg("index"), py::arg("value"), py::is_operator{})
+          py::arg("index"), py::arg("value"))
       .def(
           "__setitem__",
           [](Vector& self, py::slice slice, py::iterable iterable) {
@@ -496,7 +495,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             else
               for (; start < stop; start += step) self[start] = *(position++);
           },
-          py::arg("slice"), py::arg("values"), py::is_operator{})
+          py::arg("slice"), py::arg("values"))
       .def(
           "append", [](Vector& self, Object value) { self.push_back(value); },
           py::arg("value"))
