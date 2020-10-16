@@ -347,6 +347,20 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
+      .def(py::pickle(
+          [](const Vector& self) {  // __getstate__
+            py::list result;
+            for (const auto& element: self)
+              result.append(element);
+            return result;
+          },
+          [](py::list state) {  // __setstate__
+            Vector result;
+            result.reserve(state.size());
+            for (auto& element : state)
+              result.push_back(py::reinterpret_borrow<Object>(element));
+            return result;
+          }))
       .def("__bool__", &has_elements<Vector>)
       .def(
           "__contains__",
