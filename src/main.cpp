@@ -358,7 +358,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(
           "__delitem__",
           [](Vector& self, py::slice slice) {
-            auto size = to_size(self);
+            auto size = self.size();
             std::size_t raw_start, raw_stop, raw_step, slice_length;
             if (!slice.compute(size, &raw_start, &raw_stop, &raw_step,
                                &slice_length))
