@@ -16,7 +16,7 @@ from .hints import Domain
 
 @abc.MutableSequence.register
 class Vector(Generic[Domain]):
-    __slots__ = '_values'
+    __slots__ = '_values',
 
     def __init__(self, *values: Domain) -> None:
         self._values = list(values)  # type: List[Domain]
