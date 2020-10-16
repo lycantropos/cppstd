@@ -25,10 +25,10 @@ namespace py = pybind11;
 #define VERSION_INFO "dev"
 #endif
 
+using Index = Py_ssize_t;
 using Object = py::object;
 using Set = std::set<py::object>;
 using Vector = std::vector<py::object>;
-using Index = Py_ssize_t;
 
 template <class T>
 static bool are_addresses_equal(const T& left, const T& right) {
