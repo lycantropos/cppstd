@@ -57,6 +57,11 @@ class Vector(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def __le__(self, other: 'Vector') -> bool:
+        return (self._values <= other._values
+                if isinstance(other, Vector)
+                else NotImplemented)
+
     def __lt__(self, other: 'Vector') -> bool:
         return (self._values < other._values
                 if isinstance(other, Vector)
