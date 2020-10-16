@@ -23,3 +23,6 @@ class Set(Generic[Domain]):
         return (self._values == other._values
                 if isinstance(other, Set)
                 else NotImplemented)
+
+    def __len__(self) -> int:
+        return len(self._values)
