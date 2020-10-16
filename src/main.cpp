@@ -335,6 +335,18 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
+      .def(py::pickle(
+          [](const Set& self) {  // __getstate__
+            py::list result;
+            for (const auto& element : self) result.append(element);
+            return result;
+          },
+          [](py::list state) {  // __setstate__
+            Set result;
+            for (auto& element : state)
+              result.insert(py::reinterpret_borrow<Object>(element));
+            return result;
+          }))
       .def("__bool__", &has_elements<Set>)
       .def("__repr__", repr<Set>);
 
@@ -351,8 +363,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::pickle(
           [](const Vector& self) {  // __getstate__
             py::list result;
-            for (const auto& element: self)
-              result.append(element);
+            for (const auto& element : self) result.append(element);
             return result;
           },
           [](py::list state) {  // __setstate__
