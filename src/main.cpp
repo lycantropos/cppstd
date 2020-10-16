@@ -357,6 +357,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             return result;
           }))
       .def("__bool__", has_elements<Set>)
+      .def("__len__", to_size<Set>)
       .def("__repr__", repr<Set>);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
