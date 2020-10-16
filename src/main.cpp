@@ -455,6 +455,11 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("values"), py::is_operator{})
       .def("__iter__", to_forward_iterator<Vector>)
       .def("__len__", to_size<Vector>)
+      .def("__lt__",
+           [](const Vector& self, const Vector& other) {
+             return std::lexicographical_compare(self.begin(), self.end(),
+                                                 other.begin(), other.end());
+           }, py::is_operator{})
       .def("__repr__", repr<Vector>)
       .def("__reversed__", to_backward_iterator<Vector>)
       .def(
