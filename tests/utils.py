@@ -1,3 +1,4 @@
+import pickle
 from collections import deque
 from functools import partial
 from itertools import count
@@ -51,6 +52,10 @@ def capacity(iterable: Iterable[Any]) -> int:
     deque(zip(iterable, counter),
           maxlen=0)
     return next(counter)
+
+
+def pickle_round_trip(value: Any) -> Any:
+    return pickle.loads(pickle.dumps(value))
 
 
 def are_bound_ported_vectors_equal(bound: BoundVector,
