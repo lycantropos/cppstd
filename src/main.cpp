@@ -321,6 +321,7 @@ static bool operator<=(const VectorForwardIterator& self,
 }
 
 PYBIND11_MAKE_OPAQUE(Vector);
+PYBIND11_MAKE_OPAQUE(Set);
 
 PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
