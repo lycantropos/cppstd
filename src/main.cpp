@@ -260,6 +260,11 @@ static bool operator==(const Object& left, const Object& right) {
 }  // namespace pybind11
 
 namespace std {
+static bool operator<(const Vector& left, const Vector& right) {
+  return std::lexicographical_compare(left.begin(), left.end(), right.begin(),
+                                      right.end());
+}
+
 static std::ostream& operator<<(std::ostream& stream, const Set& set) {
   stream << C_STR(MODULE_NAME) "." SET_NAME "(";
   auto object = py::cast(set);
@@ -360,6 +365,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return result;
       }))
       .def(py::self == py::self)
+      .def(py::self < py::self)
       .def(py::pickle(
           [](const Vector& self) {  // __getstate__
             py::list result;
@@ -455,11 +461,6 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("values"), py::is_operator{})
       .def("__iter__", to_forward_iterator<Vector>)
       .def("__len__", to_size<Vector>)
-      .def("__lt__",
-           [](const Vector& self, const Vector& other) {
-             return std::lexicographical_compare(self.begin(), self.end(),
-                                                 other.begin(), other.end());
-           }, py::is_operator{})
       .def("__repr__", repr<Vector>)
       .def("__reversed__", to_backward_iterator<Vector>)
       .def(
