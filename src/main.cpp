@@ -29,8 +29,9 @@ using Index = Py_ssize_t;
 using Object = py::object;
 using RawSet = std::set<Object>;
 using RawVector = std::vector<Object>;
-using Tokenizer = std::shared_ptr<bool>;
+using IterableState = py::list;
 using Token = std::weak_ptr<bool>;
+using Tokenizer = std::shared_ptr<bool>;
 
 template <class T>
 static bool are_addresses_equal(const T& left, const T& right) {
@@ -202,6 +203,13 @@ static bool operator==(const Object& left, const Object& right) {
 }
 }  // namespace pybind11
 
+template <class Iterable>
+IterableState iterable_to_state(const Iterable& self) {
+  IterableState result;
+  for (const auto& element : self.to_raw()) result.append(element);
+  return result;
+}
+
 class Set {
  public:
   Set(const RawSet& raw)
@@ -232,15 +240,7 @@ class Set {
     _raw->erase(position);
   }
 
-  using State = py::list;
-
-  State to_state() const {
-    State result;
-    for (const auto& element : *_raw) result.append(element);
-    return result;
-  }
-
-  static Set from_state(State state) {
+  static Set from_state(IterableState state) {
     RawSet raw;
     for (auto& element : state)
       raw.insert(py::reinterpret_borrow<Object>(element));
@@ -472,8 +472,6 @@ class Vector {
     }
   }
 
-  using State = py::list;
-
   void clear() {
     reset_tokenizer();
     _raw->clear();
@@ -537,13 +535,7 @@ class Vector {
     _raw->insert(_raw->begin() + normalized_index, value);
   }
 
-  State to_state() const {
-    State result;
-    for (const auto& element : *_raw) result.append(element);
-    return result;
-  }
-
-  static Vector from_state(State state) {
+  static Vector from_state(IterableState state) {
     RawVector raw;
     raw.reserve(state.size());
     for (auto& element : state)
@@ -628,8 +620,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Set{raw};
       }))
       .def(py::self == py::self)
-      .def(py::pickle([](const Set& self) { return self.to_state(); },
-                      &Set::from_state))
+      .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
       .def("__iter__", &Set::begin)
       .def("__len__", &Set::size)
@@ -671,8 +662,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
-      .def(py::pickle([](const Vector& self) { return self.to_state(); },
-                      &Vector::from_state))
+      .def(py::pickle(&iterable_to_state<Vector>, &Vector::from_state))
       .def("__bool__", &Vector::operator bool)
       .def("__contains__", &Vector::contains, py::arg("value"))
       .def("__delitem__", &Vector::delete_item, py::arg("index"))
