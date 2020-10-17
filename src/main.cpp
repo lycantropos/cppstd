@@ -30,8 +30,28 @@ using Object = py::object;
 using RawSet = std::set<Object>;
 using RawVector = std::vector<Object>;
 using IterableState = py::list;
-using Token = std::weak_ptr<bool>;
-using Tokenizer = std::shared_ptr<bool>;
+
+class Token {
+ public:
+  Token(std::weak_ptr<bool> ptr) : _ptr(ptr) {}
+
+  bool expired() const { return _ptr.expired(); }
+
+ private:
+  std::weak_ptr<bool> _ptr;
+};
+
+class Tokenizer {
+ public:
+  Tokenizer() : _ptr(std::make_shared<bool>(false)) {}
+
+  void reset() { _ptr.reset(new bool(false)); }
+
+  Token create() const { return {std::weak_ptr<bool>{_ptr}}; }
+
+ private:
+  std::shared_ptr<bool> _ptr;
+};
 
 template <class T>
 static bool are_addresses_equal(const T& left, const T& right) {
@@ -87,7 +107,7 @@ class Iterator {
                          typename RawCollection::const_iterator>;
 
   Iterator(std::weak_ptr<RawCollection> raw_collection_ptr, Position&& position,
-           Token token)
+           const Token& token)
       : _raw_collection_ptr(raw_collection_ptr),
         position(position),
         _token(token){};
@@ -212,20 +232,20 @@ IterableState iterable_to_state(const Iterable& self) {
 
 class Set {
  public:
-  Set(const RawSet& raw)
-      : _raw(std::make_shared<RawSet>(raw)),
-        _tokenizer(std::make_shared<bool>(false)) {}
+  Set(const RawSet& raw) : _raw(std::make_shared<RawSet>(raw)), _tokenizer() {}
 
-  ~Set() { reset_tokenizer(); }
+  ~Set() { _tokenizer.reset(); }
 
   operator bool() const { return !_raw->empty(); }
 
   bool operator==(const Set& other) const { return *_raw == *other._raw; }
 
-  SetForwardIterator begin() const { return {_raw, _raw->begin(), _tokenizer}; }
+  SetForwardIterator begin() const {
+    return {_raw, _raw->begin(), _tokenizer.create()};
+  }
 
   SetBackwardIterator rbegin() const {
-    return {_raw, _raw->rbegin(), _tokenizer};
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   std::size_t size() const { return _raw->size(); }
@@ -236,7 +256,7 @@ class Set {
     auto position = _raw->find(value);
     if (position == _raw->end())
       throw py::value_error(repr(value) + " is not found.");
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->erase(position);
   }
 
@@ -250,8 +270,6 @@ class Set {
  private:
   std::shared_ptr<RawSet> _raw;
   Tokenizer _tokenizer;
-
-  void reset_tokenizer() { _tokenizer.reset(new bool(false)); }
 };
 
 static std::ostream& operator<<(std::ostream& stream, const Set& set) {
@@ -274,10 +292,9 @@ static std::ostream& operator<<(std::ostream& stream, const Set& set) {
 class Vector {
  public:
   Vector(const RawVector& raw)
-      : _raw(std::make_shared<RawVector>(raw)),
-        _tokenizer(std::make_shared<bool>(false)) {}
+      : _raw(std::make_shared<RawVector>(raw)), _tokenizer() {}
 
-  ~Vector() { reset_tokenizer(); }
+  ~Vector() { _tokenizer.reset(); }
 
   bool operator==(const Vector& other) const { return *_raw == *other._raw; }
 
@@ -329,7 +346,7 @@ class Vector {
     auto values_count = values.size();
     if (step == 1) {
       auto new_size = size - slice_length + values_count;
-      if (values_count || slice_length) reset_tokenizer();
+      if (values_count || slice_length) _tokenizer.reset();
       if (new_size > size) {
         _raw->resize(new_size, py::none{});
         const auto& last_replaced =
@@ -354,7 +371,7 @@ class Vector {
           std::string("Attempt to assign iterable with capacity") +
           std::to_string(values_count) + " to slice with size " +
           std::to_string(slice_length) + ".");
-    if (values_count || slice_length) reset_tokenizer();
+    if (values_count || slice_length) _tokenizer.reset();
     auto position = values.begin();
     if (step < 0)
       for (; start > stop; start += step) (*_raw)[start] = *(position++);
@@ -382,21 +399,23 @@ class Vector {
   operator bool() const { return !_raw->empty(); }
 
   VectorForwardIterator begin() const {
-    return {_raw, _raw->begin(), _tokenizer};
+    return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
   bool contains(Object value) const {
     return std::find(_raw->begin(), _raw->end(), value) != _raw->end();
   }
 
-  VectorForwardIterator end() const { return {_raw, _raw->end(), _tokenizer}; }
+  VectorForwardIterator end() const {
+    return {_raw, _raw->end(), _tokenizer.create()};
+  }
 
   VectorBackwardIterator rbegin() const {
-    return {_raw, _raw->rbegin(), _tokenizer};
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   VectorBackwardIterator rend() const {
-    return {_raw, _raw->rend(), _tokenizer};
+    return {_raw, _raw->rend(), _tokenizer.create()};
   }
 
   std::size_t size() const { return _raw->size(); }
@@ -404,7 +423,7 @@ class Vector {
   void extend(py::iterable iterable) {
     auto iterator = py::iter(iterable);
     if (iterator == py::iterator::sentinel()) return;
-    reset_tokenizer();
+    _tokenizer.reset();
     while (iterator != py::iterator::sentinel())
       _raw->emplace_back(*(iterator++), true);
   }
@@ -418,7 +437,7 @@ class Vector {
                                     std::to_string(size) + "), but found " +
                                     std::to_string(index) + ".")
                                  : std::string("Sequence is empty."));
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->erase(_raw->begin() + normalized_index);
   }
 
@@ -428,7 +447,7 @@ class Vector {
     if (position == end) {
       throw py::value_error(repr(value) + " is not found.");
     }
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->erase(position);
   }
 
@@ -441,7 +460,7 @@ class Vector {
     auto stop = static_cast<Index>(raw_stop);
     auto step = static_cast<Index>(raw_step);
     if (step > 0 ? start >= stop : start <= stop) return;
-    if (slice_length) reset_tokenizer();
+    if (slice_length) _tokenizer.reset();
     if (step == 1)
       _raw->erase(std::next(_raw->begin(), start),
                   std::next(_raw->begin(), stop));
@@ -473,7 +492,7 @@ class Vector {
   }
 
   void clear() {
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->clear();
   }
 
@@ -483,7 +502,7 @@ class Vector {
 
   void pop_back() {
     if (_raw->empty()) throw py::index_error("Vector is empty.");
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->pop_back();
   }
 
@@ -510,7 +529,7 @@ class Vector {
                                     std::to_string(size) + "), but found " +
                                     std::to_string(index) + ".")
                                  : std::string("Vector is empty."));
-    reset_tokenizer();
+    _tokenizer.reset();
     if (normalized_index == size - 1) {
       auto result = _raw->back();
       _raw->pop_back();
@@ -522,12 +541,12 @@ class Vector {
   }
 
   void push_back(Object value) {
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->push_back(value);
   }
 
   void insert(Index index, Object value) {
-    reset_tokenizer();
+    _tokenizer.reset();
     Index size = _raw->size();
     std::size_t normalized_index =
         std::max(std::min(index >= 0 ? index : index + size, size),
@@ -546,7 +565,7 @@ class Vector {
   const RawVector& to_raw() const { return *_raw; }
 
   void reverse() {
-    reset_tokenizer();
+    _tokenizer.reset();
     std::reverse(_raw->begin(), _raw->end());
   }
 
@@ -556,15 +575,13 @@ class Vector {
     if (size < 0)
       throw py::value_error(std::string("Size should be positive, but found ") +
                             std::to_string(size) + ".");
-    reset_tokenizer();
+    _tokenizer.reset();
     _raw->resize(size, value);
   }
 
  private:
   std::shared_ptr<RawVector> _raw;
   Tokenizer _tokenizer;
-
-  void reset_tokenizer() { _tokenizer.reset(new bool(false)); }
 };
 
 static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
