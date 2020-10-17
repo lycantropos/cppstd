@@ -156,7 +156,7 @@ class Iterator {
   }
 
   Position to_advanced_position(Index offset) const {
-    Index min_offset = std::distance(position, to_begin());
+    Index min_offset = -std::distance(to_begin(), position);
     Index max_offset = std::distance(position, to_end());
     if (offset < min_offset || offset > max_offset) {
       throw py::value_error(to_raw_collection().empty()
