@@ -10,16 +10,21 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from _cppstd import Vector as BoundVector
+from _cppstd import (Set as BoundSet,
+                     Vector as BoundVector)
 from hypothesis.strategies import SearchStrategy
 
+from cppstd.set import Set as PortedSet
 from cppstd.vector import Vector as PortedVector
 
 Domain = TypeVar('Domain')
 Range = TypeVar('Range')
 Strategy = SearchStrategy
+BoundSet = BoundSet
 BoundVector = BoundVector
+PortedSet = PortedSet
 PortedVector = PortedVector
+BoundPortedSetsPair = Tuple[BoundSet, PortedSet]
 BoundPortedVectorsPair = Tuple[BoundVector, PortedVector]
 
 
@@ -61,6 +66,14 @@ def pickle_round_trip(value: Any) -> Any:
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
     return len(bound) == len(ported) and all(map(eq, bound, ported))
+
+
+def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
+    return len(bound) == len(ported) and all(map(eq, bound, ported))
+
+
+def to_bound_ported_sets_pair(objects: List[Any]) -> BoundPortedSetsPair:
+    return BoundSet(*objects), PortedSet(*objects)
 
 
 def to_bound_ported_vectors_pair(objects: List[Any]) -> BoundPortedVectorsPair:
