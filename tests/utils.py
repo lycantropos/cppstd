@@ -59,6 +59,14 @@ def capacity(iterable: Iterable[Any]) -> int:
     return next(counter)
 
 
+def pairwise(iterable: Iterable[Domain]) -> Iterable[Tuple[Domain, Domain]]:
+    iterator = iter(iterable)
+    element = next(iterator, None)
+    for next_element in iterator:
+        yield element, next_element
+        element = next_element
+
+
 def pickle_round_trip(value: Any) -> Any:
     return pickle.loads(pickle.dumps(value))
 
