@@ -213,9 +213,9 @@ class VectorBackwardIterator(Iterator[Domain]):
                 else NotImplemented)
 
     def __next__(self) -> Domain:
-        self._validate()
+        values = self._to_validated_values()
         try:
-            result = self._values[-self._index - 1]
+            result = values[-self._index - 1]
         except IndexError:
             raise StopIteration from None
         else:
@@ -227,8 +227,7 @@ class VectorBackwardIterator(Iterator[Domain]):
                                       self._token)
 
     def _move_index(self, offset: int) -> int:
-        self._validate()
-        size = len(self._values)
+        size = len(self._to_validated_values())
         min_offset, max_offset = -self._index, size - self._index
         if offset < min_offset or offset > max_offset:
             raise ValueError('Offset should be '
@@ -292,9 +291,9 @@ class VectorForwardIterator(Iterator[Domain]):
                 else NotImplemented)
 
     def __next__(self) -> Domain:
-        self._validate()
+        values = self._to_validated_values()
         try:
-            result = self._values[self._index]
+            result = values[self._index]
         except IndexError:
             raise StopIteration from None
         else:
@@ -306,8 +305,7 @@ class VectorForwardIterator(Iterator[Domain]):
                                      self._token)
 
     def _move_index(self, offset: int) -> int:
-        self._validate()
-        size = len(self._values)
+        size = len(self._to_validated_values())
         min_offset, max_offset = -self._index, size - self._index
         if offset < min_offset or offset > max_offset:
             raise ValueError('Offset should be '
