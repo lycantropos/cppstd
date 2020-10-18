@@ -1,5 +1,10 @@
 import weakref
-from typing import Callable, Protocol
+from typing import Callable
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
 
 
 class WeakReferencable(Protocol):
