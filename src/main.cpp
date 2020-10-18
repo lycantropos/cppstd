@@ -251,6 +251,8 @@ class Set {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
+  bool contains(Object value) const { return _raw->find(value) != _raw->end(); }
+
   void remove(Object value) {
     auto position = _raw->find(value);
     if (position == _raw->end())
@@ -639,6 +641,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self == py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
+      .def("__contains__", &Set::contains)
       .def("__iter__", &Set::begin)
       .def("__len__", &Set::size)
       .def("__repr__", repr<Set>)
