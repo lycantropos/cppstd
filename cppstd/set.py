@@ -42,6 +42,11 @@ class Set(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def add(self, value: Domain) -> None:
+        if value not in self._values:
+            self._tokenizer.reset()
+            self._values.add(value)
+
     def clear(self) -> None:
         self._tokenizer.reset()
         self._values.clear()
