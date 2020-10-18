@@ -4,18 +4,22 @@ from typing import (Generic,
                     Union)
 
 from dendroid import red_black
-from dendroid.hints import Set as RawSet
 from reprit.base import (generate_repr,
                          seekers)
 
+from .core.tokenization import (Token,
+                                Tokenizer)
 from .hints import Domain
+
+AnyNode = Union[red_black.NIL, red_black.Node]
 
 
 class Set(Generic[Domain]):
-    __slots__ = '_values',
+    __slots__ = '_values', '_tokenizer'
 
     def __init__(self, *values: Domain) -> None:
         self._values = red_black.set_(*values)
+        self._tokenizer = Tokenizer()
 
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
@@ -29,44 +33,43 @@ class Set(Generic[Domain]):
                 else NotImplemented)
 
     def __iter__(self) -> 'SetForwardIterator[Domain]':
-        return SetForwardIterator(self._values.tree.min(), self._values)
+        return SetForwardIterator(self._values.min(), self._values.tree,
+                                  self._tokenizer.create())
 
     def __len__(self) -> int:
         return len(self._values)
 
 
 class SetForwardIterator(Iterator[Domain]):
-    __slots__ = '_node', '_values'
+    __slots__ = '_node', '_tree', '_token'
 
     def __init__(self,
-                 node: Union[red_black.NIL, red_black.Node],
-                 values: RawSet[Domain]) -> None:
+                 node: AnyNode,
+                 tree: red_black.Tree[Domain, Domain],
+                 token: Token) -> None:
         self._node = node
-        self._values = values
+        self._tree = tree
+        self._token = token
 
     def __add__(self, offset: int) -> 'SetForwardIterator[Domain]':
-        return SetForwardIterator(self._move_node(offset), self._values)
+        return SetForwardIterator(self._move_node(offset), self._tree,
+                                  self._token)
 
     def __iadd__(self, offset: int) -> 'SetForwardIterator[Domain]':
         self._node = self._move_node(offset)
         return self
 
     def __isub__(self, offset: int) -> 'SetForwardIterator[Domain]':
-        self._index = self._move_node(-offset)
+        self._node = self._move_node(-offset)
         return self
+
+    def __eq__(self, other: 'SetForwardIterator[Domain]') -> bool:
+        return (self._to_validated_node() is other._to_validated_node()
+                if isinstance(other, SetForwardIterator)
+                else NotImplemented)
 
     def __iter__(self) -> 'SetForwardIterator[Domain]':
         return self
-
-    def __le__(self, other: 'SetForwardIterator[Domain]') -> bool:
-        return (self._values is other._values and self._index <= other._index
-                if isinstance(other, SetForwardIterator)
-                else NotImplemented)
-
-    def __lt__(self, other: 'SetForwardIterator[Domain]') -> bool:
-        return (self._values is other._values and self._index < other._index
-                if isinstance(other, SetForwardIterator)
-                else NotImplemented)
 
     def __next__(self) -> Domain:
         try:
@@ -74,15 +77,16 @@ class SetForwardIterator(Iterator[Domain]):
         except AttributeError:
             raise StopIteration from None
         else:
-            self._node = self._values.tree.successor(self._node)
+            self._node = self._tree.successor(self._node)
             return result
 
     def __sub__(self, offset: int) -> 'SetForwardIterator[Domain]':
-        return SetForwardIterator(self._move_node(-offset), self._values)
+        return SetForwardIterator(self._move_node(-offset), self._tree,
+                                  self._token)
 
-    def _move_node(self, offset: int) -> Union[red_black.NIL, red_black.Node]:
-        size = len(self._values)
-        index = _node_to_index(self._node, self._values.tree)
+    def _move_node(self, offset: int) -> AnyNode:
+        index = _node_to_index(self._to_validated_node(), self._tree)
+        size = len(self._tree)
         min_offset, max_offset = -index, size - index
         if offset < min_offset or offset > max_offset:
             raise ValueError('Offset should be '
@@ -93,7 +97,15 @@ class SetForwardIterator(Iterator[Domain]):
                                      offset=offset)
                              if size
                              else 'Set is empty.')
-        return _index_to_node(index + offset, self._values.tree)
+        return _index_to_node(index + offset, self._tree)
+
+    def _to_validated_node(self) -> AnyNode:
+        self._validate()
+        return self._node
+
+    def _validate(self) -> None:
+        if self._token.expired:
+            raise ValueError('Iterator is invalidated.')
 
 
 def _node_to_index(node: red_black.Node, tree: red_black.Tree) -> int:
