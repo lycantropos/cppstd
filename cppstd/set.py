@@ -36,7 +36,7 @@ class Set(Generic[Domain]):
                 else NotImplemented)
 
     def __iter__(self) -> 'SetForwardIterator[Domain]':
-        return SetForwardIterator(self._values.min(), self._values.tree,
+        return SetForwardIterator(self._values.tree.min(), self._values.tree,
                                   self._tokenizer.create())
 
     def __len__(self) -> int:
