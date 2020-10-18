@@ -42,6 +42,10 @@ class Set(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def clear(self) -> None:
+        self._tokenizer.reset()
+        self._values.clear()
+
     def remove(self, value: Domain) -> None:
         node = self._values.tree.find(value)
         if node is red_black.NIL:
