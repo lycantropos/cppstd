@@ -51,6 +51,12 @@ class Set(Generic[Domain]):
         self._tokenizer.reset()
         self._values.clear()
 
+    def discard(self, value: Domain) -> None:
+        node = self._values.tree.find(value)
+        if node is not red_black.NIL:
+            self._tokenizer.reset()
+            self._values.tree.remove(node)
+
     def remove(self, value: Domain) -> None:
         node = self._values.tree.find(value)
         if node is red_black.NIL:
