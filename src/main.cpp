@@ -265,6 +265,13 @@ class Set {
 
   bool contains(Object value) const { return _raw->find(value) != _raw->end(); }
 
+  void discard(Object value) {
+    auto position = _raw->find(value);
+    if (position == _raw->end()) return;
+    _tokenizer.reset();
+    _raw->erase(position);
+  }
+
   void remove(Object value) {
     auto position = _raw->find(value);
     if (position == _raw->end())
@@ -659,6 +666,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", repr<Set>)
       .def("__reversed__", &Set::rbegin)
       .def("add", &Set::add)
+      .def("discard", &Set::discard)
       .def("clear", &Set::clear)
       .def("remove", &Set::remove, py::arg("value"));
 
