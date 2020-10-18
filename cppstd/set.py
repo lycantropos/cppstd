@@ -39,6 +39,14 @@ class Set(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def remove(self, value: Domain) -> None:
+        node = self._values.tree.find(value)
+        if node is red_black.NIL:
+            raise ValueError('{!r} is not found.'.format(value))
+        else:
+            self._tokenizer.reset()
+            self._values.tree.remove(node)
+
 
 class SetForwardIterator(Iterator[Domain]):
     __slots__ = '_node', '_tree', '_token'
