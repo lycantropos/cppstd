@@ -25,6 +25,8 @@ class Tokenizer:
     class _ValueFactory:
         __slots__ = '__weakref__',
 
+    __slots__ = '_value',
+
     def __init__(self) -> None:
         self._value = self._ValueFactory()  # type: WeakReferencable
 
