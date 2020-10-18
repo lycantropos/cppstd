@@ -251,6 +251,11 @@ class Set {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
+  void clear() {
+    _tokenizer.reset();
+    return _raw->clear();
+  }
+
   bool contains(Object value) const { return _raw->find(value) != _raw->end(); }
 
   void remove(Object value) {
@@ -646,6 +651,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__len__", &Set::size)
       .def("__repr__", repr<Set>)
       .def("__reversed__", &Set::rbegin)
+      .def("clear", &Set::clear)
       .def("remove", &Set::remove, py::arg("value"));
 
   py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
