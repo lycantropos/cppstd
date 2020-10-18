@@ -31,6 +31,16 @@ using RawSet = std::set<Object>;
 using RawVector = std::vector<Object>;
 using IterableState = py::list;
 
+namespace pybind11 {
+static std::ostream& operator<<(std::ostream& stream, const Object& object) {
+  return stream << std::string(py::repr(object));
+}
+
+static bool operator==(const Object& left, const Object& right) {
+  return left.equal(right);
+}
+}  // namespace pybind11
+
 class Token {
  public:
   Token(std::weak_ptr<bool> ptr) : _ptr(ptr) {}
@@ -212,16 +222,6 @@ using SetBackwardIterator = BackwardIterator<RawSet>;
 using SetForwardIterator = ForwardIterator<RawSet>;
 using VectorBackwardIterator = BackwardIterator<RawVector>;
 using VectorForwardIterator = ForwardIterator<RawVector>;
-
-namespace pybind11 {
-static std::ostream& operator<<(std::ostream& stream, const Object& object) {
-  return stream << std::string(py::repr(object));
-}
-
-static bool operator==(const Object& left, const Object& right) {
-  return left.equal(right);
-}
-}  // namespace pybind11
 
 template <class Iterable>
 IterableState iterable_to_state(const Iterable& self) {
