@@ -72,8 +72,9 @@ class SetForwardIterator(Iterator[Domain]):
         return self
 
     def __next__(self) -> Domain:
+        node = self._to_validated_node()
         try:
-            result = self._node.value
+            result = node.value
         except AttributeError:
             raise StopIteration from None
         else:
