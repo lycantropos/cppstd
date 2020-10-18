@@ -1,5 +1,4 @@
 import weakref
-from typing import Callable
 
 try:
     from typing import Protocol
@@ -23,14 +22,15 @@ class Token:
 
 
 class Tokenizer:
-    _value_factory = set  # type: Callable[[], WeakReferencable]
+    class _ValueFactory:
+        __slots__ = '__weakref__',
 
     def __init__(self) -> None:
-        self._value = self._value_factory()
+        self._value = self._ValueFactory()  # type: WeakReferencable
 
     def create(self) -> Token:
         return Token(self._value)
 
     def reset(self) -> None:
         del self._value
-        self._value = self._value_factory()
+        self._value = self._ValueFactory()
