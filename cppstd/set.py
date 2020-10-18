@@ -44,9 +44,8 @@ class Set(Generic[Domain]):
         return len(self._values)
 
     def __reversed__(self) -> 'SetBackwardIterator[Domain]':
-        return SetBackwardIterator(len(self._values) - 1,
-                                   self._values.tree.max(), self._values.tree,
-                                   self._tokenizer.create())
+        return SetBackwardIterator(0, self._values.tree.max(),
+                                   self._values.tree, self._tokenizer.create())
 
     def add(self, value: Domain) -> None:
         if value not in self._values:
@@ -112,7 +111,7 @@ class SetBackwardIterator(Iterator[Domain]):
         except AttributeError:
             raise StopIteration from None
         else:
-            self._index -= 1
+            self._index += 1
             self._node = self._tree.predecessor(self._node)
             return result
 
@@ -124,7 +123,7 @@ class SetBackwardIterator(Iterator[Domain]):
         self._validate()
         index = self._index
         size = len(self._tree)
-        min_offset, max_offset = index - (size - 1), index + 1
+        min_offset, max_offset = -index, size - index
         if offset < min_offset or offset > max_offset:
             raise ValueError('Offset should be '
                              'in range({min_offset}, {max_offset}), '
@@ -134,9 +133,9 @@ class SetBackwardIterator(Iterator[Domain]):
                                      offset=offset)
                              if size
                              else 'Set is empty.')
-        new_index = index - offset
-        return new_index, (_index_to_node(new_index, self._tree)
-                           if new_index >= 0
+        new_index = index + offset
+        return new_index, (_index_to_node(size - new_index - 1, self._tree)
+                           if new_index < size
                            else red_black.NIL)
 
     def _to_validated_node(self) -> AnyNode:
