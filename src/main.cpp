@@ -236,21 +236,20 @@ class Set {
 
   ~Set() { _tokenizer.reset(); }
 
+  bool operator==(const Set& other) const { return *_raw == *other._raw; }
+
   operator bool() const { return !_raw->empty(); }
 
-  bool operator==(const Set& other) const { return *_raw == *other._raw; }
+  static Set from_state(IterableState state) {
+    RawSet raw;
+    for (auto& element : state)
+      raw.insert(py::reinterpret_borrow<Object>(element));
+    return {raw};
+  }
 
   SetForwardIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
-
-  SetBackwardIterator rbegin() const {
-    return {_raw, _raw->rbegin(), _tokenizer.create()};
-  }
-
-  std::size_t size() const { return _raw->size(); }
-
-  const RawSet& to_raw() const { return *_raw; }
 
   void remove(Object value) {
     auto position = _raw->find(value);
@@ -260,12 +259,13 @@ class Set {
     _raw->erase(position);
   }
 
-  static Set from_state(IterableState state) {
-    RawSet raw;
-    for (auto& element : state)
-      raw.insert(py::reinterpret_borrow<Object>(element));
-    return {raw};
+  SetBackwardIterator rbegin() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
+
+  std::size_t size() const { return _raw->size(); }
+
+  const RawSet& to_raw() const { return *_raw; }
 
  private:
   std::shared_ptr<RawSet> _raw;
