@@ -247,6 +247,13 @@ class Set {
     return {raw};
   }
 
+  void add(Object value) {
+    auto position = _raw->find(value);
+    if (position != _raw->end()) return;
+    _tokenizer.reset();
+    _raw->insert(value);
+  }
+
   SetForwardIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
@@ -651,6 +658,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__len__", &Set::size)
       .def("__repr__", repr<Set>)
       .def("__reversed__", &Set::rbegin)
+      .def("add", &Set::add)
       .def("clear", &Set::clear)
       .def("remove", &Set::remove, py::arg("value"));
 
