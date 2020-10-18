@@ -27,6 +27,9 @@ class Set(Generic[Domain]):
     def __bool__(self) -> bool:
         return bool(self._values)
 
+    def __contains__(self, value: Domain):
+        return value in self._values
+
     def __eq__(self, other: 'Set[Domain]') -> bool:
         return (self._values == other._values
                 if isinstance(other, Set)
