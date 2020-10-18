@@ -307,6 +307,98 @@ class Vector {
     return *this < other || *this == other;
   }
 
+  operator bool() const { return !_raw->empty(); }
+
+  static Vector from_state(IterableState state) {
+    RawVector raw;
+    raw.reserve(state.size());
+    for (auto& element : state)
+      raw.push_back(py::reinterpret_borrow<Object>(element));
+    return {raw};
+  }
+
+  VectorForwardIterator begin() const {
+    return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  void clear() {
+    _tokenizer.reset();
+    _raw->clear();
+  }
+
+  bool contains(Object value) const {
+    return std::find(_raw->begin(), _raw->end(), value) != _raw->end();
+  }
+
+  std::size_t count(Object value) const {
+    return std::count(_raw->begin(), _raw->end(), value);
+  }
+
+  void delete_item(Index index) {
+    Index size = _raw->size();
+    Index normalized_index = index >= 0 ? index : index + size;
+    if (normalized_index < 0 || normalized_index >= size)
+      throw py::index_error(size ? (std::string("Index should be in range(" +
+                                                std::to_string(-size) + ", ") +
+                                    std::to_string(size) + "), but found " +
+                                    std::to_string(index) + ".")
+                                 : std::string("Sequence is empty."));
+    _tokenizer.reset();
+    _raw->erase(_raw->begin() + normalized_index);
+  }
+
+  void delete_items(py::slice slice) {
+    auto size = _raw->size();
+    std::size_t raw_start, raw_stop, raw_step, slice_length;
+    if (!slice.compute(size, &raw_start, &raw_stop, &raw_step, &slice_length))
+      throw py::error_already_set();
+    auto start = static_cast<Index>(raw_start);
+    auto stop = static_cast<Index>(raw_stop);
+    auto step = static_cast<Index>(raw_step);
+    if (step > 0 ? start >= stop : start <= stop) return;
+    if (slice_length) _tokenizer.reset();
+    if (step == 1)
+      _raw->erase(std::next(_raw->begin(), start),
+                  std::next(_raw->begin(), stop));
+    else if (step == -1)
+      _raw->erase(std::next(_raw->begin(), stop + 1),
+                  std::next(_raw->begin(), start + 1));
+    else if (step > 0) {
+      const auto& begin = _raw->begin();
+      RawVector raw{begin, std::next(begin, start)};
+      raw.reserve(size - slice_length);
+      for (; step < stop - start; start += step)
+        raw.insert(raw.end(), std::next(begin, start + 1),
+                   std::next(begin, start + step));
+      raw.insert(raw.end(), std::next(begin, start + 1), _raw->end());
+      _raw->assign(raw.begin(), raw.end());
+    } else {
+      start = size - start - 1;
+      stop = size - stop - 1;
+      step = -step;
+      const auto& rbegin = _raw->rbegin();
+      RawVector raw{rbegin, std::next(rbegin, start)};
+      raw.reserve(size - slice_length);
+      for (; step < stop - start; start += step)
+        raw.insert(raw.end(), std::next(rbegin, start + 1),
+                   std::next(rbegin, start + step));
+      raw.insert(raw.end(), std::next(rbegin, start + 1), _raw->rend());
+      _raw->assign(raw.rbegin(), raw.rend());
+    }
+  }
+
+  VectorForwardIterator end() const {
+    return {_raw, _raw->end(), _tokenizer.create()};
+  }
+
+  void extend(py::iterable iterable) {
+    auto iterator = py::iter(iterable);
+    if (iterator == py::iterator::sentinel()) return;
+    _tokenizer.reset();
+    while (iterator != py::iterator::sentinel())
+      _raw->emplace_back(*(iterator++), true);
+  }
+
   Object get_item(Index index) const {
     Index size = _raw->size();
     Index normalized_index = index >= 0 ? index : index + size;
@@ -317,6 +409,110 @@ class Vector {
                                     std::to_string(index) + ".")
                                  : std::string("Sequence is empty."));
     return (*_raw)[normalized_index];
+  }
+
+  Vector get_items(py::slice slice) const {
+    std::size_t raw_start, raw_stop, raw_step, slice_length;
+    if (!slice.compute(_raw->size(), &raw_start, &raw_stop, &raw_step,
+                       &slice_length))
+      throw py::error_already_set();
+    auto start = static_cast<Index>(raw_start);
+    auto stop = static_cast<Index>(raw_stop);
+    auto step = static_cast<Index>(raw_step);
+    RawVector raw;
+    raw.reserve(slice_length);
+    if (step < 0)
+      for (; start > stop; start += step) raw.push_back((*_raw)[start]);
+    else
+      for (; start < stop; start += step) raw.push_back((*_raw)[start]);
+    return Vector{raw};
+  }
+
+  Index index(Object value, Index start, Index stop) const {
+    Index size = _raw->size();
+    auto normalized_start =
+        std::max(std::min(start >= 0 ? start : start + size, size),
+                 static_cast<Index>(0));
+    auto normalized_stop = std::max(
+        std::min(stop >= 0 ? stop : stop + size, size), static_cast<Index>(0));
+    for (Index index = normalized_start; index < normalized_stop; ++index)
+      if ((*_raw)[index] == value) return index;
+    throw py::value_error(repr(value) + " is not found in slice(" +
+                          std::to_string(normalized_start) + ", " +
+                          std::to_string(normalized_stop) + ").");
+  }
+
+  void insert(Index index, Object value) {
+    _tokenizer.reset();
+    Index size = _raw->size();
+    std::size_t normalized_index =
+        std::max(std::min(index >= 0 ? index : index + size, size),
+                 static_cast<Index>(0));
+    _raw->insert(_raw->begin() + normalized_index, value);
+  }
+
+  Object pop(Index index) {
+    Index size = _raw->size();
+    Index normalized_index = index >= 0 ? index : index + size;
+    if (normalized_index < 0 || normalized_index >= size)
+      throw py::index_error(size ? (std::string("Index should be in range(" +
+                                                std::to_string(-size) + ", ") +
+                                    std::to_string(size) + "), but found " +
+                                    std::to_string(index) + ".")
+                                 : std::string("Vector is empty."));
+    _tokenizer.reset();
+    if (normalized_index == size - 1) {
+      auto result = _raw->back();
+      _raw->pop_back();
+      return result;
+    }
+    auto result = (*_raw)[normalized_index];
+    _raw->erase(std::next(_raw->begin(), normalized_index));
+    return result;
+  }
+
+  void pop_back() {
+    if (_raw->empty()) throw py::index_error("Vector is empty.");
+    _tokenizer.reset();
+    _raw->pop_back();
+  }
+
+  void push_back(Object value) {
+    _tokenizer.reset();
+    _raw->push_back(value);
+  }
+
+  VectorBackwardIterator rbegin() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
+  }
+
+  void remove(Object value) {
+    const auto& end = _raw->end();
+    const auto& position = std::find(_raw->begin(), end, value);
+    if (position == end) {
+      throw py::value_error(repr(value) + " is not found.");
+    }
+    _tokenizer.reset();
+    _raw->erase(position);
+  }
+
+  VectorBackwardIterator rend() const {
+    return {_raw, _raw->rend(), _tokenizer.create()};
+  }
+
+  void reserve(std::size_t capacity) { _raw->reserve(capacity); }
+
+  void resize(Index size, Object value) {
+    if (size < 0)
+      throw py::value_error(std::string("Size should be positive, but found ") +
+                            std::to_string(size) + ".");
+    _tokenizer.reset();
+    _raw->resize(size, value);
+  }
+
+  void reverse() {
+    _tokenizer.reset();
+    std::reverse(_raw->begin(), _raw->end());
   }
 
   void set_item(Index index, Object value) {
@@ -379,205 +575,9 @@ class Vector {
       for (; start < stop; start += step) (*_raw)[start] = *(position++);
   }
 
-  Vector get_items(py::slice slice) const {
-    std::size_t raw_start, raw_stop, raw_step, slice_length;
-    if (!slice.compute(_raw->size(), &raw_start, &raw_stop, &raw_step,
-                       &slice_length))
-      throw py::error_already_set();
-    auto start = static_cast<Index>(raw_start);
-    auto stop = static_cast<Index>(raw_stop);
-    auto step = static_cast<Index>(raw_step);
-    RawVector raw;
-    raw.reserve(slice_length);
-    if (step < 0)
-      for (; start > stop; start += step) raw.push_back((*_raw)[start]);
-    else
-      for (; start < stop; start += step) raw.push_back((*_raw)[start]);
-    return Vector{raw};
-  }
-
-  operator bool() const { return !_raw->empty(); }
-
-  VectorForwardIterator begin() const {
-    return {_raw, _raw->begin(), _tokenizer.create()};
-  }
-
-  bool contains(Object value) const {
-    return std::find(_raw->begin(), _raw->end(), value) != _raw->end();
-  }
-
-  VectorForwardIterator end() const {
-    return {_raw, _raw->end(), _tokenizer.create()};
-  }
-
-  VectorBackwardIterator rbegin() const {
-    return {_raw, _raw->rbegin(), _tokenizer.create()};
-  }
-
-  VectorBackwardIterator rend() const {
-    return {_raw, _raw->rend(), _tokenizer.create()};
-  }
-
   std::size_t size() const { return _raw->size(); }
 
-  void extend(py::iterable iterable) {
-    auto iterator = py::iter(iterable);
-    if (iterator == py::iterator::sentinel()) return;
-    _tokenizer.reset();
-    while (iterator != py::iterator::sentinel())
-      _raw->emplace_back(*(iterator++), true);
-  }
-
-  void delete_item(Index index) {
-    Index size = _raw->size();
-    Index normalized_index = index >= 0 ? index : index + size;
-    if (normalized_index < 0 || normalized_index >= size)
-      throw py::index_error(size ? (std::string("Index should be in range(" +
-                                                std::to_string(-size) + ", ") +
-                                    std::to_string(size) + "), but found " +
-                                    std::to_string(index) + ".")
-                                 : std::string("Sequence is empty."));
-    _tokenizer.reset();
-    _raw->erase(_raw->begin() + normalized_index);
-  }
-
-  void remove(Object value) {
-    const auto& end = _raw->end();
-    const auto& position = std::find(_raw->begin(), end, value);
-    if (position == end) {
-      throw py::value_error(repr(value) + " is not found.");
-    }
-    _tokenizer.reset();
-    _raw->erase(position);
-  }
-
-  void delete_items(py::slice slice) {
-    auto size = _raw->size();
-    std::size_t raw_start, raw_stop, raw_step, slice_length;
-    if (!slice.compute(size, &raw_start, &raw_stop, &raw_step, &slice_length))
-      throw py::error_already_set();
-    auto start = static_cast<Index>(raw_start);
-    auto stop = static_cast<Index>(raw_stop);
-    auto step = static_cast<Index>(raw_step);
-    if (step > 0 ? start >= stop : start <= stop) return;
-    if (slice_length) _tokenizer.reset();
-    if (step == 1)
-      _raw->erase(std::next(_raw->begin(), start),
-                  std::next(_raw->begin(), stop));
-    else if (step == -1)
-      _raw->erase(std::next(_raw->begin(), stop + 1),
-                  std::next(_raw->begin(), start + 1));
-    else if (step > 0) {
-      const auto& begin = _raw->begin();
-      RawVector raw{begin, std::next(begin, start)};
-      raw.reserve(size - slice_length);
-      for (; step < stop - start; start += step)
-        raw.insert(raw.end(), std::next(begin, start + 1),
-                   std::next(begin, start + step));
-      raw.insert(raw.end(), std::next(begin, start + 1), _raw->end());
-      _raw->assign(raw.begin(), raw.end());
-    } else {
-      start = size - start - 1;
-      stop = size - stop - 1;
-      step = -step;
-      const auto& rbegin = _raw->rbegin();
-      RawVector raw{rbegin, std::next(rbegin, start)};
-      raw.reserve(size - slice_length);
-      for (; step < stop - start; start += step)
-        raw.insert(raw.end(), std::next(rbegin, start + 1),
-                   std::next(rbegin, start + step));
-      raw.insert(raw.end(), std::next(rbegin, start + 1), _raw->rend());
-      _raw->assign(raw.rbegin(), raw.rend());
-    }
-  }
-
-  void clear() {
-    _tokenizer.reset();
-    _raw->clear();
-  }
-
-  std::size_t count(Object value) const {
-    return std::count(_raw->begin(), _raw->end(), value);
-  }
-
-  void pop_back() {
-    if (_raw->empty()) throw py::index_error("Vector is empty.");
-    _tokenizer.reset();
-    _raw->pop_back();
-  }
-
-  Index index(Object value, Index start, Index stop) const {
-    Index size = _raw->size();
-    auto normalized_start =
-        std::max(std::min(start >= 0 ? start : start + size, size),
-                 static_cast<Index>(0));
-    auto normalized_stop = std::max(
-        std::min(stop >= 0 ? stop : stop + size, size), static_cast<Index>(0));
-    for (Index index = normalized_start; index < normalized_stop; ++index)
-      if ((*_raw)[index] == value) return index;
-    throw py::value_error(repr(value) + " is not found in slice(" +
-                          std::to_string(normalized_start) + ", " +
-                          std::to_string(normalized_stop) + ").");
-  }
-
-  Object pop(Index index) {
-    Index size = _raw->size();
-    Index normalized_index = index >= 0 ? index : index + size;
-    if (normalized_index < 0 || normalized_index >= size)
-      throw py::index_error(size ? (std::string("Index should be in range(" +
-                                                std::to_string(-size) + ", ") +
-                                    std::to_string(size) + "), but found " +
-                                    std::to_string(index) + ".")
-                                 : std::string("Vector is empty."));
-    _tokenizer.reset();
-    if (normalized_index == size - 1) {
-      auto result = _raw->back();
-      _raw->pop_back();
-      return result;
-    }
-    auto result = (*_raw)[normalized_index];
-    _raw->erase(std::next(_raw->begin(), normalized_index));
-    return result;
-  }
-
-  void push_back(Object value) {
-    _tokenizer.reset();
-    _raw->push_back(value);
-  }
-
-  void insert(Index index, Object value) {
-    _tokenizer.reset();
-    Index size = _raw->size();
-    std::size_t normalized_index =
-        std::max(std::min(index >= 0 ? index : index + size, size),
-                 static_cast<Index>(0));
-    _raw->insert(_raw->begin() + normalized_index, value);
-  }
-
-  static Vector from_state(IterableState state) {
-    RawVector raw;
-    raw.reserve(state.size());
-    for (auto& element : state)
-      raw.push_back(py::reinterpret_borrow<Object>(element));
-    return {raw};
-  }
-
   const RawVector& to_raw() const { return *_raw; }
-
-  void reverse() {
-    _tokenizer.reset();
-    std::reverse(_raw->begin(), _raw->end());
-  }
-
-  void reserve(std::size_t capacity) { _raw->reserve(capacity); }
-
-  void resize(Index size, Object value) {
-    if (size < 0)
-      throw py::value_error(std::string("Size should be positive, but found ") +
-                            std::to_string(size) + ".");
-    _tokenizer.reset();
-    _raw->resize(size, value);
-  }
 
  private:
   std::shared_ptr<RawVector> _raw;
