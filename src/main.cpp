@@ -510,9 +510,7 @@ class Vector {
   void remove(Object value) {
     const auto& end = _raw->end();
     const auto& position = std::find(_raw->begin(), end, value);
-    if (position == end) {
-      throw py::value_error(repr(value) + " is not found.");
-    }
+    if (position == end) throw py::value_error(repr(value) + " is not found.");
     _tokenizer.reset();
     _raw->erase(position);
   }
