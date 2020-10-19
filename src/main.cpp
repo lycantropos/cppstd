@@ -287,8 +287,6 @@ class Set {
  public:
   Set(const RawSet& raw) : _raw(std::make_shared<RawSet>(raw)), _tokenizer() {}
 
-  ~Set() { _tokenizer.reset(); }
-
   Set operator&(const Set& other) const {
     RawSet raw;
     std::set_intersection(_raw->begin(), _raw->end(), other._raw->begin(),
@@ -508,8 +506,6 @@ class Vector {
  public:
   Vector(const RawVector& raw)
       : _raw(std::make_shared<RawVector>(raw)), _tokenizer() {}
-
-  ~Vector() { _tokenizer.reset(); }
 
   bool operator==(const Vector& other) const { return *_raw == *other._raw; }
 
