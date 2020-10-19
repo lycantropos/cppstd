@@ -27,6 +27,11 @@ class Vector(Generic[Domain]):
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
 
+    def __add__(self, other: 'Vector[Domain]') -> 'Vector[Domain]':
+        return (Vector(*self._values, *other._values)
+                if isinstance(other, Vector)
+                else NotImplemented)
+
     def __bool__(self) -> bool:
         return bool(self._values)
 
