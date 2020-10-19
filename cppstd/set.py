@@ -83,7 +83,7 @@ class Set(Generic[Domain]):
             return NotImplemented
         if other:
             self._tokenizer.reset()
-            self._values ^= other
+            self._values ^= other._values
         return self
 
     def __len__(self) -> int:
