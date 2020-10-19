@@ -26,6 +26,11 @@ class Set(Generic[Domain]):
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
 
+    def __and__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        return (self._from_raw(self._values & other._values)
+                if isinstance(other, Set)
+                else NotImplemented)
+
     def __bool__(self) -> bool:
         return bool(self._values)
 
