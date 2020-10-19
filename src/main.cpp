@@ -361,6 +361,11 @@ class Set {
     return *_raw->rbegin();
   }
 
+  Object min() const {
+    if (_raw->empty()) throw py::value_error("Set is empty.");
+    return *_raw->begin();
+  }
+
   SetBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
@@ -776,6 +781,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("discard", &Set::discard)
       .def("end", &Set::end)
       .def("max", &Set::max)
+      .def("min", &Set::min)
       .def("rbegin", &Set::rbegin)
       .def("remove", &Set::remove, py::arg("value"))
       .def("rend", &Set::rend);
