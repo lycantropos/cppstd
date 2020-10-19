@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -15,6 +16,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define MAP_NAME "Map"
 #define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
 #define SET_FORWARD_ITERATOR_NAME "SetForwardIterator"
 #define SET_NAME "Set"
@@ -27,6 +29,7 @@ namespace py = pybind11;
 
 using Index = Py_ssize_t;
 using Object = py::object;
+using RawMap = std::map<Object, Object>;
 using RawSet = std::set<Object>;
 using RawVector = std::vector<Object>;
 using IterableState = py::list;
@@ -228,6 +231,56 @@ IterableState iterable_to_state(const Iterable& self) {
   IterableState result;
   for (const auto& element : self.to_raw()) result.append(element);
   return result;
+}
+
+class Map {
+ public:
+  Map(const RawMap& raw) : _raw(std::make_shared<RawMap>(raw)), _tokenizer() {}
+
+  const RawMap& to_raw() const { return *_raw; }
+
+ private:
+  std::shared_ptr<RawMap> _raw;
+  Tokenizer _tokenizer;
+};
+
+namespace std {
+static std::ostream& operator<<(std::ostream& stream,
+                                const RawMap::value_type& item) {
+  stream << "(";
+  auto object = item.first;
+  if (Py_ReprEnter(object.ptr()) == 0) {
+    stream << object;
+    Py_ReprLeave(object.ptr());
+  } else
+    stream << "...";
+  stream << ", ";
+  object = item.second;
+  if (Py_ReprEnter(object.ptr()) == 0) {
+    stream << object;
+    Py_ReprLeave(object.ptr());
+  } else
+    stream << "...";
+  return stream << ")";
+}
+}  // namespace std
+
+static std::ostream& operator<<(std::ostream& stream, const Map& map) {
+  stream << C_STR(MODULE_NAME) "." MAP_NAME "(";
+  auto object = py::cast(map);
+  if (Py_ReprEnter(object.ptr()) == 0) {
+    const auto& raw = map.to_raw();
+    if (!raw.empty()) {
+      auto position = raw.cbegin();
+      stream << *position;
+      for (++position; position != raw.end(); ++position)
+        stream << ", " << *position;
+    }
+    Py_ReprLeave(object.ptr());
+  } else {
+    stream << "...";
+  }
+  return stream << ")";
 }
 
 class Set {
@@ -795,6 +848,25 @@ static bool operator<=(const VectorForwardIterator& self,
 PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
   m.attr("__version__") = VERSION_INFO;
+
+  py::class_<Map> PyMap(m, MAP_NAME);
+  PyMap
+      .def(py::init([](py::args args) {
+        RawMap raw;
+        for (auto& element : args) {
+          auto item = element.cast<py::tuple>();
+          auto item_size = item.size();
+          if (item_size != 2)
+            throw py::type_error(
+                std::string("Items should be iterables of size 2, but found ") +
+                std::string(py::repr(element.get_type())) + " with " +
+                std::to_string(item_size) + " elements.");
+          else
+            raw.insert({item[0], item[1]});
+        }
+        return Map{raw};
+      }))
+      .def("__repr__", to_repr<Map>);
 
   py::class_<Set> PySet(m, SET_NAME);
   PySet
