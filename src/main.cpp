@@ -281,8 +281,7 @@ class Set {
     const auto& raw = *_raw;
     const auto& other_raw = *other._raw;
     const auto& other_end = other_raw.cend();
-    if (raw.size() >= other_raw.size())
-      return false;
+    if (raw.size() >= other_raw.size()) return false;
     for (const auto& element : raw)
       if (other_raw.find(element) == other_end) return false;
     return true;
@@ -292,8 +291,7 @@ class Set {
     const auto& raw = *_raw;
     const auto& other_raw = *other._raw;
     const auto& other_end = other_raw.cend();
-    if (raw.size() > other_raw.size())
-      return false;
+    if (raw.size() > other_raw.size()) return false;
     for (const auto& element : raw)
       if (other_raw.find(element) == other_end) return false;
     return true;
