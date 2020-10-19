@@ -378,6 +378,21 @@ class Set {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
+  bool isdisjoint(const Set& other) const {
+    const auto& raw = *_raw;
+    const auto& other_raw = *other._raw;
+    if (raw.size() < other_raw.size()) {
+      const auto& other_end = other_raw.cend();
+      for (const auto& element : raw)
+        if (other_raw.find(element) != other_end) return false;
+    } else {
+      const auto& end = raw.cend();
+      for (const auto& element : other_raw)
+        if (raw.find(element) != end) return false;
+    }
+    return true;
+  }
+
   Object max() const {
     if (_raw->empty()) throw py::value_error("Set is empty.");
     return *_raw->rbegin();
@@ -811,6 +826,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("begin", &Set::begin)
       .def("clear", &Set::clear)
       .def("discard", &Set::discard)
+      .def("isdisjoint", &Set::isdisjoint)
       .def("end", &Set::end)
       .def("max", &Set::max)
       .def("min", &Set::min)
