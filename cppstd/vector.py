@@ -59,6 +59,10 @@ class Vector(Generic[Domain]):
                 if isinstance(item, int)
                 else Vector(*self._values[item]))
 
+    def __iadd__(self, values: Iterable[Domain]) -> 'Vector[Domain]':
+        self.extend(values)
+        return self
+
     def __iter__(self) -> 'VectorForwardIterator[Domain]':
         return VectorForwardIterator(0, self._values, self._tokenizer.create())
 
