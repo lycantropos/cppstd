@@ -1,3 +1,4 @@
+from collections import abc
 from itertools import islice
 from typing import (Generic,
                     Iterator,
@@ -16,6 +17,7 @@ from .hints import Domain
 AnyNode = Union[red_black.NIL, red_black.Node]
 
 
+@abc.MutableSet.register
 class Set(Generic[Domain]):
     __slots__ = '_values', '_tokenizer'
 
