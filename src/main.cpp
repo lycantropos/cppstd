@@ -356,6 +356,13 @@ class Set {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
+  Object max() const {
+    if (_raw->empty()) throw py::value_error("Set is empty.");
+    auto position = _raw->end();
+    --position;
+    return *position;
+  }
+
   SetBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
@@ -770,6 +777,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("clear", &Set::clear)
       .def("discard", &Set::discard)
       .def("end", &Set::end)
+      .def("max", &Set::max)
       .def("rbegin", &Set::rbegin)
       .def("remove", &Set::remove, py::arg("value"))
       .def("rend", &Set::rend);
