@@ -137,6 +137,9 @@ class Set(Generic[Domain]):
         return SetForwardIterator(len(self._values), red_black.NIL,
                                   self._values.tree, self._tokenizer.create())
 
+    def max(self) -> Domain:
+        return self._values.max()
+
     def rbegin(self) -> 'SetBackwardIterator[Domain]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
