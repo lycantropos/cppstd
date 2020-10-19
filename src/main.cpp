@@ -272,6 +272,10 @@ class Set {
     _raw->erase(position);
   }
 
+  SetForwardIterator end() const {
+    return {_raw, _raw->end(), _tokenizer.create()};
+  }
+
   SetBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
@@ -667,6 +671,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("begin", &Set::begin)
       .def("clear", &Set::clear)
       .def("discard", &Set::discard)
+      .def("end", &Set::end)
       .def("rbegin", &Set::rbegin)
       .def("remove", &Set::remove, py::arg("value"));
 
