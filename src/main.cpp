@@ -369,7 +369,9 @@ class Set {
   Object pop() {
     if (_raw->empty()) throw py::value_error("Set is empty.");
     _tokenizer.reset();
-    return *_raw->erase(_raw->begin());
+    const auto position = _raw->cbegin();
+    _raw->erase(position);
+    return *position;
   }
 
   SetBackwardIterator rbegin() const {
