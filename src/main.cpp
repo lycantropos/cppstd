@@ -358,9 +358,7 @@ class Set {
 
   Object max() const {
     if (_raw->empty()) throw py::value_error("Set is empty.");
-    auto position = _raw->end();
-    --position;
-    return *position;
+    return *_raw->rbegin();
   }
 
   SetBackwardIterator rbegin() const {
