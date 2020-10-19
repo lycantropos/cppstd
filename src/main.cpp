@@ -262,6 +262,13 @@ class Set {
     return *this;
   }
 
+  Set operator|(const Set& other) const {
+    RawSet raw;
+    std::set_union(other._raw->begin(), other._raw->end(), _raw->begin(),
+                   _raw->end(), std::inserter(raw, raw.end()));
+    return {raw};
+  }
+
   Set& operator|=(const Set& other) {
     RawSet extra_values;
     std::set_difference(other._raw->begin(), other._raw->end(), _raw->begin(),
@@ -272,13 +279,6 @@ class Set {
       _raw->insert(extra_values.begin(), extra_values.end());
     }
     return *this;
-  }
-
-  Set operator|(const Set& other) const {
-    RawSet raw;
-    std::set_union(other._raw->begin(), other._raw->end(), _raw->begin(),
-                   _raw->end(), std::inserter(raw, raw.end()));
-    return {raw};
   }
 
   operator bool() const { return !_raw->empty(); }
