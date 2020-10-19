@@ -37,6 +37,20 @@ class Set(Generic[Domain]):
                 if isinstance(other, Set)
                 else NotImplemented)
 
+    def __iand__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        if not isinstance(other, Set):
+            return NotImplemented
+        size = len(self._values)
+        if len(other._values) != size:
+            self._tokenizer.reset()
+            self._values &= other._values
+        else:
+            common_values = self._values & other._values
+            if len(common_values) != size:
+                self._tokenizer.reset()
+                self._values = common_values
+        return self
+
     def __ior__(self, other: 'Set[Domain]') -> 'Set[Domain]':
         if not isinstance(other, Set):
             return NotImplemented
