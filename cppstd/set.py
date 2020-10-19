@@ -73,6 +73,11 @@ class Set(Generic[Domain]):
                 if isinstance(other, Set)
                 else NotImplemented)
 
+    def __xor__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        return (self._from_raw(self._values ^ other._values)
+                if isinstance(other, Set)
+                else NotImplemented)
+
     @classmethod
     def _from_raw(cls, raw: RawSet[Domain]) -> 'Set[Domain]':
         result = Set()
