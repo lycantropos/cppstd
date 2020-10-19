@@ -88,6 +88,11 @@ class SetBackwardIterator(Iterator[Domain]):
         return SetBackwardIterator(*self._move_node(offset), self._tree,
                                    self._token)
 
+    def __eq__(self, other: 'SetBackwardIterator[Domain]') -> bool:
+        return (self._to_validated_node() is other._to_validated_node()
+                if isinstance(other, SetBackwardIterator)
+                else NotImplemented)
+
     def __iadd__(self, offset: int) -> 'SetBackwardIterator[Domain]':
         self._index, self._node = self._move_node(offset)
         return self
@@ -95,11 +100,6 @@ class SetBackwardIterator(Iterator[Domain]):
     def __isub__(self, offset: int) -> 'SetBackwardIterator[Domain]':
         self._index, self._node = self._move_node(-offset)
         return self
-
-    def __eq__(self, other: 'SetBackwardIterator[Domain]') -> bool:
-        return (self._to_validated_node() is other._to_validated_node()
-                if isinstance(other, SetBackwardIterator)
-                else NotImplemented)
 
     def __iter__(self) -> 'SetBackwardIterator[Domain]':
         return self
