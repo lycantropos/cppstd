@@ -100,6 +100,10 @@ class Set(Generic[Domain]):
             self._tokenizer.reset()
             self._values.add(value)
 
+    def begin(self) -> 'SetForwardIterator[Domain]':
+        return SetForwardIterator(0, self._values.tree.min(),
+                                  self._values.tree, self._tokenizer.create())
+
     def clear(self) -> None:
         self._tokenizer.reset()
         self._values.clear()
