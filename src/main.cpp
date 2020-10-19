@@ -16,6 +16,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define MAP_FORWARD_ITERATOR_NAME "MapForwardIterator"
 #define MAP_NAME "Map"
 #define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
 #define SET_FORWARD_ITERATOR_NAME "SetForwardIterator"
@@ -221,6 +222,7 @@ using BackwardIterator = Iterator<RawCollection, true>;
 template <class RawCollection>
 using ForwardIterator = Iterator<RawCollection, false>;
 
+using MapForwardIterator = ForwardIterator<RawMap>;
 using SetBackwardIterator = BackwardIterator<RawSet>;
 using SetForwardIterator = ForwardIterator<RawSet>;
 using VectorBackwardIterator = BackwardIterator<RawVector>;
@@ -238,6 +240,10 @@ class Map {
   Map(const RawMap& raw) : _raw(std::make_shared<RawMap>(raw)), _tokenizer() {}
 
   const RawMap& to_raw() const { return *_raw; }
+
+  MapForwardIterator begin() const {
+    return {_raw, _raw->begin(), _tokenizer.create()};
+  }
 
  private:
   std::shared_ptr<RawMap> _raw;
@@ -862,7 +868,19 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         }
         return Map{raw};
       }))
-      .def("__repr__", to_repr<Map>);
+      .def("__repr__", to_repr<Map>)
+      .def("begin", &Map::begin)
+      .def("items", &Map::begin);
+
+  py::class_<MapForwardIterator>(m, MAP_FORWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](MapForwardIterator& self) -> MapForwardIterator& { return self; })
+      .def("__next__", &MapForwardIterator::next);
 
   py::class_<Set> PySet(m, SET_NAME);
   PySet
