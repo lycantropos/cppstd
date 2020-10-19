@@ -94,6 +94,11 @@ class Set(Generic[Domain]):
                 if isinstance(other, Set)
                 else NotImplemented)
 
+    def __le__(self, other: 'Set[Domain]') -> bool:
+        return (self._values <= other._values
+                if isinstance(other, Set)
+                else NotImplemented)
+
     def __or__(self, other: 'Set[Domain]') -> 'Set[Domain]':
         return (self._from_raw(self._values | other._values)
                 if isinstance(other, Set)
