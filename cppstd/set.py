@@ -64,6 +64,11 @@ class Set(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
+    def __or__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        return (self._from_raw(self._values | other._values)
+                if isinstance(other, Set)
+                else NotImplemented)
+
     def __reversed__(self) -> 'SetBackwardIterator[Domain]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
