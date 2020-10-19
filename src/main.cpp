@@ -664,6 +664,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", repr<Set>)
       .def("__reversed__", &Set::rbegin)
       .def("add", &Set::add)
+      .def("begin", &Set::begin)
       .def("clear", &Set::clear)
       .def("discard", &Set::discard)
       .def("remove", &Set::remove, py::arg("value"));
