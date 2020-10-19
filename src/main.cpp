@@ -69,7 +69,7 @@ static bool are_addresses_equal(const T& left, const T& right) {
 }
 
 template <class Type>
-std::string repr(const Type& value) {
+std::string to_repr(const Type& value) {
   std::ostringstream stream;
   stream.precision(std::numeric_limits<double>::digits10 + 2);
   stream << value;
@@ -416,7 +416,7 @@ class Set {
   void remove(Object value) {
     auto position = _raw->find(value);
     if (position == _raw->end())
-      throw py::value_error(repr(value) + " is not found.");
+      throw py::value_error(to_repr(value) + " is not found.");
     _tokenizer.reset();
     _raw->erase(position);
   }
@@ -605,7 +605,7 @@ class Vector {
         std::min(stop >= 0 ? stop : stop + size, size), static_cast<Index>(0));
     for (Index index = normalized_start; index < normalized_stop; ++index)
       if ((*_raw)[index] == value) return index;
-    throw py::value_error(repr(value) + " is not found in slice(" +
+    throw py::value_error(to_repr(value) + " is not found in slice(" +
                           std::to_string(normalized_start) + ", " +
                           std::to_string(normalized_stop) + ").");
   }
@@ -657,7 +657,8 @@ class Vector {
   void remove(Object value) {
     const auto& end = _raw->end();
     const auto& position = std::find(_raw->begin(), end, value);
-    if (position == end) throw py::value_error(repr(value) + " is not found.");
+    if (position == end)
+      throw py::value_error(to_repr(value) + " is not found.");
     _tokenizer.reset();
     _raw->erase(position);
   }
@@ -819,7 +820,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__contains__", &Set::contains)
       .def("__iter__", &Set::begin)
       .def("__len__", &Set::size)
-      .def("__repr__", repr<Set>)
+      .def("__repr__", to_repr<Set>)
       .def("__reversed__", &Set::rbegin)
       .def("add", &Set::add)
       .def("begin", &Set::begin)
@@ -888,7 +889,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           py::arg("values"), py::is_operator{})
       .def("__iter__", &Vector::begin)
       .def("__len__", &Vector::size)
-      .def("__repr__", repr<Vector>)
+      .def("__repr__", to_repr<Vector>)
       .def("__reversed__", &Vector::rbegin)
       .def("__setitem__", &Vector::set_item, py::arg("index"), py::arg("value"))
       .def("__setitem__", &Vector::set_items, py::arg("slice"),
