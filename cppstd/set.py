@@ -143,6 +143,9 @@ class Set(Generic[Domain]):
     def min(self) -> Domain:
         return self._values.min()
 
+    def pop(self) -> Domain:
+        return self._values.pop()
+
     def rbegin(self) -> 'SetBackwardIterator[Domain]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
