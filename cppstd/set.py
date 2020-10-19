@@ -118,6 +118,10 @@ class Set(Generic[Domain]):
         return SetForwardIterator(len(self._values), red_black.NIL,
                                   self._values.tree, self._tokenizer.create())
 
+    def rbegin(self) -> 'SetBackwardIterator[Domain]':
+        return SetBackwardIterator(0, self._values.tree.max(),
+                                   self._values.tree, self._tokenizer.create())
+
     def remove(self, value: Domain) -> None:
         node = self._values.tree.find(value)
         if node is red_black.NIL:
