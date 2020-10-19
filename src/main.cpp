@@ -238,6 +238,18 @@ class Set {
 
   bool operator==(const Set& other) const { return *_raw == *other._raw; }
 
+  Set& operator|=(const Set& other) {
+    RawSet extra_values;
+    std::set_difference(other._raw->begin(), other._raw->end(), _raw->begin(),
+                        _raw->end(),
+                        std::inserter(extra_values, extra_values.end()));
+    if (!extra_values.empty()) {
+      _tokenizer.reset();
+      _raw->insert(extra_values.begin(), extra_values.end());
+    }
+    return *this;
+  }
+
   operator bool() const { return !_raw->empty(); }
 
   static Set from_state(IterableState state) {
@@ -664,6 +676,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Set{raw};
       }))
       .def(py::self == py::self)
+      .def(py::self |= py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
       .def("__contains__", &Set::contains)
