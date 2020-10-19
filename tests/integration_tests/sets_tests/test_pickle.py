@@ -11,4 +11,4 @@ def test_basic(pair: BoundPortedSetsPair) -> None:
     bound, ported = pair
 
     assert are_bound_ported_sets_equal(pickle_round_trip(bound),
-                                          pickle_round_trip(ported))
+                                       pickle_round_trip(ported))
