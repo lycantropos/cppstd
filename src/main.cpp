@@ -16,6 +16,7 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define MAP_BACKWARD_ITERATOR_NAME "MapBackwardIterator"
 #define MAP_FORWARD_ITERATOR_NAME "MapForwardIterator"
 #define MAP_NAME "Map"
 #define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
@@ -222,6 +223,7 @@ using BackwardIterator = Iterator<RawCollection, true>;
 template <class RawCollection>
 using ForwardIterator = Iterator<RawCollection, false>;
 
+using MapBackwardIterator = BackwardIterator<RawMap>;
 using MapForwardIterator = ForwardIterator<RawMap>;
 using SetBackwardIterator = BackwardIterator<RawSet>;
 using SetForwardIterator = ForwardIterator<RawSet>;
@@ -243,6 +245,10 @@ class Map {
 
   MapForwardIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  MapBackwardIterator rbegin() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
  private:
@@ -870,7 +876,20 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       }))
       .def("__repr__", to_repr<Map>)
       .def("begin", &Map::begin)
-      .def("items", &Map::begin);
+      .def("items", &Map::begin)
+      .def("rbegin", &Map::rbegin);
+
+  py::class_<MapBackwardIterator>(m, MAP_BACKWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](MapBackwardIterator& self) -> MapBackwardIterator& {
+             return self;
+           })
+      .def("__next__", &MapBackwardIterator::next);
 
   py::class_<MapForwardIterator>(m, MAP_FORWARD_ITERATOR_NAME)
       .def(py::self == py::self)
