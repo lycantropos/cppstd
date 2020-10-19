@@ -795,7 +795,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
   m.attr("__version__") = VERSION_INFO;
 
-  py::class_<Set>(m, SET_NAME)
+  py::class_<Set> PySet(m, SET_NAME);
+  PySet
       .def(py::init([](py::args args) {
         RawSet raw;
         for (auto& element : args)
@@ -832,6 +833,9 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("rbegin", &Set::rbegin)
       .def("remove", &Set::remove, py::arg("value"))
       .def("rend", &Set::rend);
+
+  py::module collections_abc = py::module::import("collections.abc");
+  collections_abc.attr("MutableSet").attr("register")(PySet);
 
   py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
@@ -909,7 +913,6 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            py::arg("value") = py::none())
       .def("reverse", &Vector::reverse);
 
-  py::module collections_abc = py::module::import("collections.abc");
   collections_abc.attr("MutableSequence").attr("register")(PyVector);
 
   py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
