@@ -243,7 +243,11 @@ class Set {
                           std::inserter(common_values, common_values.end()));
     if (!common_values.empty()) {
       _tokenizer.reset();
-      _raw->insert(common_values.begin(), common_values.end());
+      RawSet* result = new RawSet{};
+      std::set_difference(_raw->begin(), _raw->end(), common_values.begin(),
+                          common_values.end(),
+                          std::inserter(*result, result->end()));
+      _raw.reset(result);
     }
     return *this;
   }
