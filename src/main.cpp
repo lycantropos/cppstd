@@ -379,6 +379,12 @@ class Vector {
     return *this < other || *this == other;
   }
 
+  Vector operator+(const Vector& other) const {
+    RawVector raw{*_raw};
+    raw.insert(raw.end(), other._raw->begin(), other._raw->end());
+    return {raw};
+  }
+
   operator bool() const { return !_raw->empty(); }
 
   static Vector from_state(IterableState state) {
@@ -761,6 +767,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self == py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def(py::self + py::self)
       .def(py::pickle(&iterable_to_state<Vector>, &Vector::from_state))
       .def("__bool__", &Vector::operator bool)
       .def("__contains__", &Vector::contains, py::arg("value"))
