@@ -44,6 +44,13 @@ class Set(Generic[Domain]):
             self._values |= extra_values
         return self
 
+    def __isub__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        common_values = self._values & other._values
+        if common_values:
+            self._tokenizer.reset()
+            self._values -= common_values
+        return self
+
     def __iter__(self) -> 'SetForwardIterator[Domain]':
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
