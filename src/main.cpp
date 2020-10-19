@@ -250,6 +250,14 @@ class Set {
 
   bool operator==(const Set& other) const { return *_raw == *other._raw; }
 
+  Set operator^(const Set& other) const {
+    RawSet raw;
+    std::set_symmetric_difference(_raw->begin(), _raw->end(),
+                                  other._raw->begin(), other._raw->end(),
+                                  std::inserter(raw, raw.end()));
+    return {raw};
+  }
+
   Set& operator^=(const Set& other) {
     if (other) {
       _tokenizer.reset();
@@ -714,6 +722,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       }))
       .def(py::self -= py::self)
       .def(py::self == py::self)
+      .def(py::self ^ py::self)
       .def(py::self ^= py::self)
       .def(py::self | py::self)
       .def(py::self |= py::self)
