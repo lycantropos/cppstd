@@ -37,6 +37,13 @@ class Set(Generic[Domain]):
                 if isinstance(other, Set)
                 else NotImplemented)
 
+    def __ior__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        extra_values = other._values - self._values
+        if extra_values:
+            self._tokenizer.reset()
+            self._values |= extra_values
+        return self
+
     def __iter__(self) -> 'SetForwardIterator[Domain]':
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
