@@ -38,6 +38,8 @@ class Set(Generic[Domain]):
                 else NotImplemented)
 
     def __ior__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        if not isinstance(other, Set):
+            return NotImplemented
         extra_values = other._values - self._values
         if extra_values:
             self._tokenizer.reset()
@@ -45,6 +47,8 @@ class Set(Generic[Domain]):
         return self
 
     def __isub__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        if not isinstance(other, Set):
+            return NotImplemented
         common_values = self._values & other._values
         if common_values:
             self._tokenizer.reset()
@@ -56,6 +60,8 @@ class Set(Generic[Domain]):
                                   self._values.tree, self._tokenizer.create())
 
     def __ixor__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        if not isinstance(other, Set):
+            return NotImplemented
         if other:
             self._tokenizer.reset()
             self._values ^= other
