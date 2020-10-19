@@ -272,16 +272,16 @@ class Set {
     _raw->erase(position);
   }
 
+  SetBackwardIterator rbegin() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
+  }
+
   void remove(Object value) {
     auto position = _raw->find(value);
     if (position == _raw->end())
       throw py::value_error(repr(value) + " is not found.");
     _tokenizer.reset();
     _raw->erase(position);
-  }
-
-  SetBackwardIterator rbegin() const {
-    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   std::size_t size() const { return _raw->size(); }
