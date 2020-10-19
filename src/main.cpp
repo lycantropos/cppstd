@@ -238,6 +238,18 @@ class Set {
 
   bool operator==(const Set& other) const { return *_raw == *other._raw; }
 
+  Set& operator^=(const Set& other) {
+    if (other) {
+      _tokenizer.reset();
+      RawSet* result = new RawSet{};
+      std::set_symmetric_difference(_raw->begin(), _raw->end(),
+                                    other._raw->begin(), other._raw->end(),
+                                    std::inserter(*result, result->end()));
+      _raw.reset(result);
+    }
+    return *this;
+  }
+
   Set& operator|=(const Set& other) {
     RawSet extra_values;
     std::set_difference(other._raw->begin(), other._raw->end(), _raw->begin(),
@@ -676,6 +688,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Set{raw};
       }))
       .def(py::self == py::self)
+      .def(py::self ^= py::self)
       .def(py::self |= py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
