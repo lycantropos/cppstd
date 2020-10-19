@@ -274,6 +274,13 @@ class Set {
     return *this;
   }
 
+  Set operator|(const Set& other) const {
+    RawSet raw;
+    std::set_union(other._raw->begin(), other._raw->end(), _raw->begin(),
+                   _raw->end(), std::inserter(raw, raw.end()));
+    return {raw};
+  }
+
   operator bool() const { return !_raw->empty(); }
 
   static Set from_state(IterableState state) {
@@ -702,6 +709,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self -= py::self)
       .def(py::self == py::self)
       .def(py::self ^= py::self)
+      .def(py::self | py::self)
       .def(py::self |= py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
