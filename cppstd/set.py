@@ -114,6 +114,10 @@ class Set(Generic[Domain]):
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
+    def end(self) -> 'SetForwardIterator[Domain]':
+        return SetForwardIterator(len(self._values), red_black.NIL,
+                                  self._values.tree, self._tokenizer.create())
+
     def remove(self, value: Domain) -> None:
         node = self._values.tree.find(value)
         if node is red_black.NIL:
