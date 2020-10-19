@@ -147,6 +147,9 @@ class Set(Generic[Domain]):
         return SetForwardIterator(len(self._values), red_black.NIL,
                                   self._values.tree, self._tokenizer.create())
 
+    def isdisjoint(self, other: 'Set[Domain]') -> bool:
+        return self._values.isdisjoint(other._values)
+
     def max(self) -> Domain:
         return self._values.max()
 
