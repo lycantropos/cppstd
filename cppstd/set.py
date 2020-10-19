@@ -48,6 +48,12 @@ class Set(Generic[Domain]):
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
 
+    def __ixor__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        if other:
+            self._tokenizer.reset()
+            self._values ^= other
+        return self
+
     def __len__(self) -> int:
         return len(self._values)
 
