@@ -144,6 +144,8 @@ class Set(Generic[Domain]):
         return self._values.min()
 
     def pop(self) -> Domain:
+        if self._values:
+            self._tokenizer.reset()
         return self._values.pop()
 
     def rbegin(self) -> 'SetBackwardIterator[Domain]':
