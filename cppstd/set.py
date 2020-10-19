@@ -5,6 +5,7 @@ from typing import (Generic,
                     Union)
 
 from dendroid import red_black
+from dendroid.hints import Set as RawSet
 from reprit.base import (generate_repr,
                          seekers)
 
@@ -46,6 +47,17 @@ class Set(Generic[Domain]):
     def __reversed__(self) -> 'SetBackwardIterator[Domain]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
+
+    def __sub__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+        return (self._from_raw(self._values - other._values)
+                if isinstance(other, Set)
+                else NotImplemented)
+
+    @classmethod
+    def _from_raw(cls, raw: RawSet[Domain]) -> 'Set[Domain]':
+        result = Set()
+        result._values = raw
+        return result
 
     def add(self, value: Domain) -> None:
         if value not in self._values:
