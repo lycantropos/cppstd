@@ -236,6 +236,13 @@ class Set {
 
   ~Set() { _tokenizer.reset(); }
 
+  Set operator-(const Set& other) const {
+    RawSet raw;
+    std::set_difference(_raw->begin(), _raw->end(), other._raw->begin(),
+                        other._raw->end(), std::inserter(raw, raw.end()));
+    return {raw};
+  }
+
   Set& operator-=(const Set& other) {
     RawSet common_values;
     std::set_intersection(other._raw->begin(), other._raw->end(), _raw->begin(),
@@ -724,6 +731,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           raw.insert(py::reinterpret_borrow<Object>(element));
         return Set{raw};
       }))
+      .def(py::self - py::self)
       .def(py::self -= py::self)
       .def(py::self == py::self)
       .def(py::self ^ py::self)
