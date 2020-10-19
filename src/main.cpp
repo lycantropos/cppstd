@@ -288,6 +288,10 @@ class Set {
     _raw->erase(position);
   }
 
+  SetBackwardIterator rend() const {
+    return {_raw, _raw->rend(), _tokenizer.create()};
+  }
+
   std::size_t size() const { return _raw->size(); }
 
   const RawSet& to_raw() const { return *_raw; }
@@ -673,7 +677,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("discard", &Set::discard)
       .def("end", &Set::end)
       .def("rbegin", &Set::rbegin)
-      .def("remove", &Set::remove, py::arg("value"));
+      .def("remove", &Set::remove, py::arg("value"))
+      .def("rend", &Set::rend);
 
   py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
