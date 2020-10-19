@@ -130,6 +130,10 @@ class Set(Generic[Domain]):
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
+    def rend(self) -> 'SetBackwardIterator[Domain]':
+        return SetBackwardIterator(len(self._values), red_black.NIL,
+                                   self._values.tree, self._tokenizer.create())
+
 
 class SetBackwardIterator(Iterator[Domain]):
     __slots__ = '_index', '_node', '_tree', '_token'
