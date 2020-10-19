@@ -667,6 +667,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("begin", &Set::begin)
       .def("clear", &Set::clear)
       .def("discard", &Set::discard)
+      .def("rbegin", &Set::rbegin)
       .def("remove", &Set::remove, py::arg("value"));
 
   py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
