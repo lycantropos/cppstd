@@ -328,6 +328,8 @@ class Map {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
+  std::size_t size() const { return _raw->size(); }
+
   MapValuesForwardIterator values() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
@@ -949,6 +951,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Map{raw};
       }))
       .def("__iter__", &Map::keys)
+      .def("__len__", &Map::size)
       .def("__repr__", to_repr<Map>)
       .def("__reversed__", &Map::reversed_keys)
       .def("begin", &Map::begin)
