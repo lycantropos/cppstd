@@ -10,6 +10,16 @@ from .core.tokenization import Tokenizer
 from .hints import Value
 
 
+class SetBackwardIterator(red_black.TreeBackwardIterator, Generic[Value]):
+    def __next__(self) -> Value:
+        return super().__next__().value
+
+
+class SetForwardIterator(red_black.TreeForwardIterator, Generic[Value]):
+    def __next__(self) -> Value:
+        return super().__next__().value
+
+
 @abc.MutableSet.register
 class Set(Generic[Value]):
     __slots__ = '_values', '_tokenizer'
@@ -69,7 +79,7 @@ class Set(Generic[Value]):
             self._values -= common_values
         return self
 
-    def __iter__(self) -> 'SetForwardIterator[Value]':
+    def __iter__(self) -> SetForwardIterator[Value]:
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
 
@@ -99,7 +109,7 @@ class Set(Generic[Value]):
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __reversed__(self) -> 'SetBackwardIterator[Value]':
+    def __reversed__(self) -> SetBackwardIterator[Value]:
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
 
@@ -124,7 +134,7 @@ class Set(Generic[Value]):
             self._tokenizer.reset()
             self._values.add(value)
 
-    def begin(self) -> 'SetForwardIterator[Value]':
+    def begin(self) -> SetForwardIterator[Value]:
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
 
@@ -138,7 +148,7 @@ class Set(Generic[Value]):
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
-    def end(self) -> 'SetForwardIterator[Value]':
+    def end(self) -> SetForwardIterator[Value]:
         return SetForwardIterator(len(self._values), red_black.NIL,
                                   self._values.tree, self._tokenizer.create())
 
@@ -156,7 +166,7 @@ class Set(Generic[Value]):
             self._tokenizer.reset()
         return self._values.pop()
 
-    def rbegin(self) -> 'SetBackwardIterator[Value]':
+    def rbegin(self) -> SetBackwardIterator[Value]:
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
 
@@ -168,16 +178,6 @@ class Set(Generic[Value]):
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
-    def rend(self) -> 'SetBackwardIterator[Value]':
+    def rend(self) -> SetBackwardIterator[Value]:
         return SetBackwardIterator(len(self._values), red_black.NIL,
                                    self._values.tree, self._tokenizer.create())
-
-
-class SetBackwardIterator(red_black.TreeBackwardIterator, Generic[Value]):
-    def __next__(self) -> Value:
-        return super().__next__().value
-
-
-class SetForwardIterator(red_black.TreeForwardIterator, Generic[Value]):
-    def __next__(self) -> Value:
-        return super().__next__().value
