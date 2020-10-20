@@ -33,6 +33,9 @@ class Map(Generic[Key, Value]):
 
     __repr__ = generate_repr(__init__)
 
+    def __bool__(self) -> bool:
+        return bool(self._raw)
+
     def __contains__(self, key: Key) -> bool:
         return key in self._raw
 
