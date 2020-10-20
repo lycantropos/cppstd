@@ -9,6 +9,16 @@ from .hints import (Item,
                     Value)
 
 
+class MapForwardIterator(red_black.TreeForwardIterator, Generic[Key, Value]):
+    def __next__(self) -> Item:
+        return super().__next__().item
+
+
+class MapKeysForwardIterator(red_black.TreeForwardIterator, Generic[Key]):
+    def __next__(self) -> Key:
+        return super().__next__().key
+
+
 class Map(Generic[Key, Value]):
     __slots__ = '_items', '_tokenizer'
 
@@ -18,11 +28,13 @@ class Map(Generic[Key, Value]):
 
     __repr__ = generate_repr(__init__)
 
-    def items(self) -> 'MapForwardIterator[Key, Value]':
+    def __iter__(self) -> MapKeysForwardIterator[Key]:
+        return MapKeysForwardIterator(0, self._items.tree.min(),
+                                      self._items.tree,
+                                      self._tokenizer.create())
+
+    def items(self) -> MapForwardIterator[Key, Value]:
         return MapForwardIterator(0, self._items.tree.min(), self._items.tree,
                                   self._tokenizer.create())
 
-
-class MapForwardIterator(red_black.TreeForwardIterator, Generic[Key, Value]):
-    def __next__(self) -> Item:
-        return super().__next__().item
+    keys = __iter__
