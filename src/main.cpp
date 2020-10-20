@@ -946,7 +946,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
                 std::string(py::repr(element.get_type())) + " with " +
                 std::to_string(item_size) + " elements.");
           else
-            raw.insert({item[0], item[1]});
+            raw[item[0]] = item[1];
         }
         return Map{raw};
       }))
