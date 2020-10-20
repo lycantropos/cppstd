@@ -306,6 +306,15 @@ class Map {
 
   operator bool() const { return !_raw->empty(); }
 
+  static Map from_state(IterableState state) {
+    RawMap raw;
+    for (auto& element : state) {
+      auto item = element.cast<py::tuple>();
+      raw[item[0]] = item[1];
+    }
+    return {raw};
+  }
+
   MapForwardIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
@@ -973,6 +982,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         }
         return Map{raw};
       }))
+      .def(py::pickle(&iterable_to_state<Map>, &Map::from_state))
       .def(py::self == py::self)
       .def("__bool__", &Map::operator bool)
       .def("__contains__", &Map::contains, py::arg("key"))
