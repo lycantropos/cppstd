@@ -310,7 +310,7 @@ class Map {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
-  void clear(Object key) {
+  void clear() {
     _tokenizer.reset();
     return _raw->clear();
   }
