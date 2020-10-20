@@ -28,6 +28,9 @@ class Map(Generic[Key, Value]):
 
     __repr__ = generate_repr(__init__)
 
+    def __len__(self) -> int:
+        return len(self._items)
+
     def __iter__(self) -> MapKeysForwardIterator[Key]:
         return MapKeysForwardIterator(0, self._items.tree.min(),
                                       self._items.tree,
