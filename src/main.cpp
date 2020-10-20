@@ -302,6 +302,8 @@ class Map {
  public:
   Map(const RawMap& raw) : _raw(std::make_shared<RawMap>(raw)), _tokenizer() {}
 
+  bool operator==(const Map& other) const { return *_raw == *other._raw; }
+
   operator bool() const { return !_raw->empty(); }
 
   MapForwardIterator begin() const {
@@ -958,6 +960,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         }
         return Map{raw};
       }))
+      .def(py::self == py::self)
       .def("__delitem__", &Map::delete_item, py::arg("key"))
       .def("__iter__", &Map::keys)
       .def("__len__", &Map::size)
