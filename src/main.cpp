@@ -310,6 +310,11 @@ class Map {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
+  void clear(Object key) {
+    _tokenizer.reset();
+    return _raw->clear();
+  }
+
   bool contains(Object key) const { return _raw->find(key) != _raw->end(); }
 
   void delete_item(Object key) {
@@ -971,6 +976,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", to_repr<Map>)
       .def("__reversed__", &Map::reversed_keys)
       .def("begin", &Map::begin)
+      .def("clear", &Map::clear)
       .def("end", &Map::end)
       .def("items", &Map::begin)
       .def("keys", &Map::keys)
