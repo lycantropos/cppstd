@@ -308,6 +308,14 @@ class Map {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
+  void delete_item(Object value) {
+    auto position = _raw->find(value);
+    if (position == _raw->end())
+      throw py::value_error(to_repr(value) + " is not found.");
+    _tokenizer.reset();
+    _raw->erase(position);
+  }
+
   MapForwardIterator end() const {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
@@ -950,6 +958,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         }
         return Map{raw};
       }))
+      .def("__delitem__", &Map::delete_item, py::arg("key"))
       .def("__iter__", &Map::keys)
       .def("__len__", &Map::size)
       .def("__repr__", to_repr<Map>)
