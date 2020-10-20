@@ -1,15 +1,12 @@
 from collections import abc
-from typing import (Generic,
-                    Iterator,
-                    Tuple)
+from typing import Generic
 
 from reprit.base import (generate_repr,
                          seekers)
 
 from .core import red_black
 from .core.hints import RawSet
-from .core.tokenization import (Token,
-                                Tokenizer)
+from .core.tokenization import Tokenizer
 from .hints import Value
 
 
@@ -176,153 +173,11 @@ class Set(Generic[Value]):
                                    self._values.tree, self._tokenizer.create())
 
 
-class SetBackwardIterator(Iterator[Value]):
-    __slots__ = '_index', '_node', '_tree', '_token'
-
-    def __init__(self,
-                 index: int,
-                 node: red_black.AnyNode,
-                 tree: red_black.Tree[Value, Value],
-                 token: Token) -> None:
-        self._index = index
-        self._node = node
-        self._tree = tree
-        self._token = token
-
-    def __add__(self, offset: int) -> 'SetBackwardIterator[Value]':
-        return SetBackwardIterator(*self._move_node(offset), self._tree,
-                                   self._token)
-
-    def __eq__(self, other: 'SetBackwardIterator[Value]') -> bool:
-        return (self._to_validated_node() is other._to_validated_node()
-                if isinstance(other, SetBackwardIterator)
-                else NotImplemented)
-
-    def __iadd__(self, offset: int) -> 'SetBackwardIterator[Value]':
-        self._index, self._node = self._move_node(offset)
-        return self
-
-    def __isub__(self, offset: int) -> 'SetBackwardIterator[Value]':
-        self._index, self._node = self._move_node(-offset)
-        return self
-
-    def __iter__(self) -> 'SetBackwardIterator[Value]':
-        return self
-
+class SetBackwardIterator(red_black.TreeBackwardIterator, Generic[Value]):
     def __next__(self) -> Value:
-        node = self._to_validated_node()
-        try:
-            result = node.value
-        except AttributeError:
-            raise StopIteration from None
-        else:
-            self._index += 1
-            self._node = self._tree.predecessor(self._node)
-            return result
-
-    def __sub__(self, offset: int) -> 'SetBackwardIterator[Value]':
-        return SetBackwardIterator(*self._move_node(-offset), self._tree,
-                                   self._token)
-
-    def _move_node(self, offset: int) -> Tuple[int, red_black.AnyNode]:
-        self._validate()
-        index = self._index
-        size = len(self._tree)
-        min_offset, max_offset = -index, size - index
-        if offset < min_offset or offset > max_offset:
-            raise ValueError('Offset should be '
-                             'in range({min_offset}, {max_offset}), '
-                             'but found {offset}.'
-                             .format(min_offset=min_offset,
-                                     max_offset=max_offset + 1,
-                                     offset=offset)
-                             if size
-                             else 'Set is empty.')
-        new_index = index + offset
-        return new_index, (red_black.index_to_node(size - new_index - 1,
-                                                   self._tree)
-                           if new_index < size
-                           else red_black.NIL)
-
-    def _to_validated_node(self) -> red_black.AnyNode:
-        self._validate()
-        return self._node
-
-    def _validate(self) -> None:
-        if self._token.expired:
-            raise ValueError('Iterator is invalidated.')
+        return super().__next__().value
 
 
-class SetForwardIterator(Iterator[Value]):
-    __slots__ = '_index', '_node', '_tree', '_token'
-
-    def __init__(self,
-                 index: int,
-                 node: red_black.AnyNode,
-                 tree: red_black.Tree[Value, Value],
-                 token: Token) -> None:
-        self._index = index
-        self._node = node
-        self._tree = tree
-        self._token = token
-
-    def __add__(self, offset: int) -> 'SetForwardIterator[Value]':
-        return SetForwardIterator(*self._move_node(offset), self._tree,
-                                  self._token)
-
-    def __eq__(self, other: 'SetForwardIterator[Value]') -> bool:
-        return (self._to_validated_node() is other._to_validated_node()
-                if isinstance(other, SetForwardIterator)
-                else NotImplemented)
-
-    def __iadd__(self, offset: int) -> 'SetForwardIterator[Value]':
-        self._index, self._node = self._move_node(offset)
-        return self
-
-    def __isub__(self, offset: int) -> 'SetForwardIterator[Value]':
-        self._index, self._node = self._move_node(-offset)
-        return self
-
-    def __iter__(self) -> 'SetForwardIterator[Value]':
-        return self
-
+class SetForwardIterator(red_black.TreeForwardIterator, Generic[Value]):
     def __next__(self) -> Value:
-        node = self._to_validated_node()
-        try:
-            result = node.value
-        except AttributeError:
-            raise StopIteration from None
-        else:
-            self._node = self._tree.successor(self._node)
-            return result
-
-    def __sub__(self, offset: int) -> 'SetForwardIterator[Value]':
-        return SetForwardIterator(*self._move_node(-offset), self._tree,
-                                  self._token)
-
-    def _move_node(self, offset: int) -> Tuple[int, red_black.AnyNode]:
-        self._validate()
-        index = self._index
-        size = len(self._tree)
-        min_offset, max_offset = -index, size - index
-        if offset < min_offset or offset > max_offset:
-            raise ValueError('Offset should be '
-                             'in range({min_offset}, {max_offset}), '
-                             'but found {offset}.'
-                             .format(min_offset=min_offset,
-                                     max_offset=max_offset + 1,
-                                     offset=offset)
-                             if size
-                             else 'Set is empty.')
-        new_index = index + offset
-        return new_index, (red_black.index_to_node(new_index, self._tree)
-                           if new_index < size
-                           else red_black.NIL)
-
-    def _to_validated_node(self) -> red_black.AnyNode:
-        self._validate()
-        return self._node
-
-    def _validate(self) -> None:
-        if self._token.expired:
-            raise ValueError('Iterator is invalidated.')
+        return super().__next__().value
