@@ -264,10 +264,14 @@ class Map {
  public:
   Map(const RawMap& raw) : _raw(std::make_shared<RawMap>(raw)), _tokenizer() {}
 
-  const RawMap& to_raw() const { return *_raw; }
+  operator bool() const { return !_raw->empty(); }
 
   MapForwardIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  MapForwardIterator end() const {
+    return {_raw, _raw->end(), _tokenizer.create()};
   }
 
   MapBackwardIterator rbegin() const {
@@ -304,11 +308,10 @@ static std::ostream& operator<<(std::ostream& stream, const Map& map) {
   stream << C_STR(MODULE_NAME) "." MAP_NAME "(";
   auto object = py::cast(map);
   if (Py_ReprEnter(object.ptr()) == 0) {
-    const auto& raw = map.to_raw();
-    if (!raw.empty()) {
-      auto position = raw.cbegin();
+    if (map) {
+      auto position = map.begin();
       stream << *position;
-      for (++position; position != raw.end(); ++position)
+      for (++position; position != map.end(); ++position)
         stream << ", " << *position;
     }
     Py_ReprLeave(object.ptr());
