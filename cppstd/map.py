@@ -14,6 +14,11 @@ class MapForwardIterator(red_black.TreeForwardIterator, Generic[Key, Value]):
         return super().__next__().item
 
 
+class MapKeysBackwardIterator(red_black.TreeBackwardIterator, Generic[Key]):
+    def __next__(self) -> Key:
+        return super().__next__().key
+
+
 class MapKeysForwardIterator(red_black.TreeForwardIterator, Generic[Key]):
     def __next__(self) -> Key:
         return super().__next__().key
@@ -35,6 +40,11 @@ class Map(Generic[Key, Value]):
         return MapKeysForwardIterator(0, self._items.tree.min(),
                                       self._items.tree,
                                       self._tokenizer.create())
+
+    def __reversed__(self) -> MapKeysBackwardIterator[Key]:
+        return MapKeysBackwardIterator(0, self._items.tree.max(),
+                                       self._items.tree,
+                                       self._tokenizer.create())
 
     def items(self) -> MapForwardIterator[Key, Value]:
         return MapForwardIterator(0, self._items.tree.min(), self._items.tree,
