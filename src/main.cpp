@@ -316,16 +316,16 @@ class Map {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
-  MapKeysBackwardIterator reversed_keys() const {
-    return {_raw, _raw->rbegin(), _tokenizer.create()};
-  }
-
   MapBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   MapBackwardIterator rend() const {
     return {_raw, _raw->rend(), _tokenizer.create()};
+  }
+
+  MapKeysBackwardIterator reversed_keys() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   MapValuesForwardIterator values() const {
