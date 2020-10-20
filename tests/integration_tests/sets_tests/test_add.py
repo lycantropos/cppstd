@@ -7,7 +7,7 @@ from tests.utils import (BoundPortedSetsPair,
 from . import strategies
 
 
-@given(strategies.non_empty_sets_pairs, strategies.objects)
+@given(strategies.sets_pairs, strategies.objects)
 def test_basic(pair: BoundPortedSetsPair, value: Any) -> None:
     bound, ported = pair
 
