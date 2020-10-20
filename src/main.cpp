@@ -947,6 +947,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", to_repr<Map>)
       .def("__reversed__", &Map::reversed_keys)
       .def("begin", &Map::begin)
+      .def("end", &Map::end)
       .def("items", &Map::begin)
       .def("keys", &Map::keys)
       .def("rbegin", &Map::rbegin)
