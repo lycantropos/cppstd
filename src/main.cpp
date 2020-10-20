@@ -8,6 +8,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <vector>
 
@@ -18,6 +19,9 @@ namespace py = pybind11;
 #define C_STR(a) C_STR_HELPER(a)
 #define MAP_BACKWARD_ITERATOR_NAME "MapBackwardIterator"
 #define MAP_FORWARD_ITERATOR_NAME "MapForwardIterator"
+#define MAP_KEYS_BACKWARD_ITERATOR_NAME "MapKeysBackwardIterator"
+#define MAP_KEYS_FORWARD_ITERATOR_NAME "MapKeysForwardIterator"
+#define MAP_VALUES_FORWARD_ITERATOR_NAME "MapValuesForwardIterator"
 #define MAP_NAME "Map"
 #define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
 #define SET_FORWARD_ITERATOR_NAME "SetForwardIterator"
@@ -32,6 +36,7 @@ namespace py = pybind11;
 using Index = Py_ssize_t;
 using Object = py::object;
 using RawMap = std::map<Object, Object>;
+using RawMapItem = RawMap::value_type;
 using RawSet = std::set<Object>;
 using RawVector = std::vector<Object>;
 using IterableState = py::list;
@@ -113,7 +118,7 @@ struct ToReversedEnd {
   }
 };
 
-template <class RawCollection, bool reversed>
+template <bool reversed, class RawCollection, class Transformer>
 class Iterator {
  public:
   using Position =
@@ -168,12 +173,13 @@ class Iterator {
     return *this;
   }
 
-  const typename RawCollection::value_type& next() {
+  typename Transformer::return_t next() {
+    static const Transformer transform;
     validate();
     if (position == to_end()) throw py::stop_iteration();
-    auto current_position = position;
+    const auto current_position = position;
     position = std::next(position);
-    return *current_position;
+    return transform(*current_position);
   }
 
   Position to_position() const {
@@ -182,7 +188,7 @@ class Iterator {
   }
 
   bool has_same_collection_with(
-      const Iterator<RawCollection, reversed>& other) const {
+      const Iterator<reversed, RawCollection, Transformer>& other) const {
     return are_addresses_equal(to_raw_collection(), other.to_raw_collection());
   }
 
@@ -241,17 +247,48 @@ class Iterator {
   }
 };
 
-template <class RawCollection>
-using BackwardIterator = Iterator<RawCollection, true>;
-template <class RawCollection>
-using ForwardIterator = Iterator<RawCollection, false>;
+template <class RawCollection, class Transformer>
+using BackwardIterator = Iterator<true, RawCollection, Transformer>;
+template <class RawCollection, class Transformer>
+using ForwardIterator = Iterator<false, RawCollection, Transformer>;
 
-using MapBackwardIterator = BackwardIterator<RawMap>;
-using MapForwardIterator = ForwardIterator<RawMap>;
-using SetBackwardIterator = BackwardIterator<RawSet>;
-using SetForwardIterator = ForwardIterator<RawSet>;
-using VectorBackwardIterator = BackwardIterator<RawVector>;
-using VectorForwardIterator = ForwardIterator<RawVector>;
+template <class T>
+struct Identity {
+  using return_t = T&&;
+
+  return_t operator()(T&& value) const { return std::forward<T>(value); }
+};
+
+template <class RawCollection>
+using PlainBackwardIterator =
+    BackwardIterator<RawCollection,
+                     Identity<const typename RawCollection::value_type&>>;
+template <class RawCollection>
+using PlainForwardIterator =
+    ForwardIterator<RawCollection,
+                    Identity<const typename RawCollection::value_type&>>;
+
+template <class Tuple, std::size_t Index>
+struct CoordinateGetter {
+  using return_t = typename std::tuple_element<Index, Tuple>::type;
+
+  return_t operator()(const Tuple& value) const {
+    return std::get<Index>(value);
+  }
+};
+
+using MapKeysBackwardIterator =
+    BackwardIterator<RawMap, CoordinateGetter<RawMapItem, 0>>;
+using MapKeysForwardIterator =
+    ForwardIterator<RawMap, CoordinateGetter<RawMapItem, 0>>;
+using MapValuesForwardIterator =
+    ForwardIterator<RawMap, CoordinateGetter<RawMapItem, 1>>;
+using MapBackwardIterator = PlainBackwardIterator<RawMap>;
+using MapForwardIterator = PlainForwardIterator<RawMap>;
+using SetBackwardIterator = PlainBackwardIterator<RawSet>;
+using SetForwardIterator = PlainForwardIterator<RawSet>;
+using VectorBackwardIterator = PlainBackwardIterator<RawVector>;
+using VectorForwardIterator = PlainForwardIterator<RawVector>;
 
 template <class Iterable>
 IterableState iterable_to_state(const Iterable& self) {
@@ -274,8 +311,20 @@ class Map {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
+  MapKeysForwardIterator keys() const {
+    return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  MapKeysBackwardIterator reversed_keys() const {
+    return {_raw, _raw->rbegin(), _tokenizer.create()};
+  }
+
   MapBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
+  }
+
+  MapValuesForwardIterator values() const {
+    return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
  private:
@@ -284,8 +333,7 @@ class Map {
 };
 
 namespace std {
-static std::ostream& operator<<(std::ostream& stream,
-                                const RawMap::value_type& item) {
+static std::ostream& operator<<(std::ostream& stream, const RawMapItem& item) {
   stream << "(";
   auto object = item.first;
   if (Py_ReprEnter(object.ptr()) == 0) {
@@ -528,7 +576,8 @@ static std::ostream& operator<<(std::ostream& stream, const Set& set) {
     if (set) {
       auto position = set.begin();
       stream << *position;
-      for (++position; position != set.end(); ++position) stream << ", " << *position;
+      for (++position; position != set.end(); ++position)
+        stream << ", " << *position;
     }
     Py_ReprLeave(object.ptr());
   } else {
@@ -894,10 +943,14 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         }
         return Map{raw};
       }))
+      .def("__iter__", &Map::keys)
       .def("__repr__", to_repr<Map>)
+      .def("__reversed__", &Map::reversed_keys)
       .def("begin", &Map::begin)
       .def("items", &Map::begin)
-      .def("rbegin", &Map::rbegin);
+      .def("keys", &Map::keys)
+      .def("rbegin", &Map::rbegin)
+      .def("values", &Map::values);
 
   py::class_<MapBackwardIterator>(m, MAP_BACKWARD_ITERATOR_NAME)
       .def(py::self == py::self)
@@ -920,6 +973,42 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__iter__",
            [](MapForwardIterator& self) -> MapForwardIterator& { return self; })
       .def("__next__", &MapForwardIterator::next);
+
+  py::class_<MapKeysBackwardIterator>(m, MAP_KEYS_BACKWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](MapKeysBackwardIterator& self) -> MapKeysBackwardIterator& {
+             return self;
+           })
+      .def("__next__", &MapKeysBackwardIterator::next);
+
+  py::class_<MapKeysForwardIterator>(m, MAP_KEYS_FORWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](MapKeysForwardIterator& self) -> MapKeysForwardIterator& {
+             return self;
+           })
+      .def("__next__", &MapKeysForwardIterator::next);
+
+  py::class_<MapValuesForwardIterator>(m, MAP_VALUES_FORWARD_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def("__iter__",
+           [](MapValuesForwardIterator& self) -> MapValuesForwardIterator& {
+             return self;
+           })
+      .def("__next__", &MapValuesForwardIterator::next);
 
   py::class_<Set> PySet(m, SET_NAME);
   PySet
