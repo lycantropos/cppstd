@@ -2,7 +2,8 @@ import pickle
 from collections import deque
 from functools import partial
 from itertools import count
-from operator import eq
+from operator import (eq,
+                      itemgetter)
 from typing import (Any,
                     Callable,
                     Iterable,
@@ -10,20 +11,27 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from _cppstd import (Set as BoundSet,
+from _cppstd import (Map as BoundMap,
+                     Set as BoundSet,
                      Vector as BoundVector)
 from hypothesis.strategies import SearchStrategy
 
+from cppstd.hints import (Item,
+                          Value)
+from cppstd.map import Map as PortedMap
 from cppstd.set import Set as PortedSet
 from cppstd.vector import Vector as PortedVector
 
 Domain = TypeVar('Domain')
 Range = TypeVar('Range')
 Strategy = SearchStrategy
+BoundMap = BoundMap
 BoundSet = BoundSet
 BoundVector = BoundVector
+PortedMap = PortedMap
 PortedSet = PortedSet
 PortedVector = PortedVector
+BoundPortedMapsPair = Tuple[BoundMap, PortedMap]
 BoundPortedSetsPair = Tuple[BoundSet, PortedSet]
 BoundPortedVectorsPair = Tuple[BoundVector, PortedVector]
 
@@ -71,18 +79,31 @@ def pickle_round_trip(value: Any) -> Any:
     return pickle.loads(pickle.dumps(value))
 
 
-def are_bound_ported_vectors_equal(bound: BoundVector,
-                                   ported: PortedVector) -> bool:
-    return len(bound) == len(ported) and all(map(eq, bound, ported))
+item_to_key = itemgetter(0)
+
+
+def are_bound_ported_maps_equal(bound: BoundMap, ported: PortedMap) -> bool:
+    return len(bound) == len(ported) and all(map(eq, bound.items(),
+                                                 ported.items()))
 
 
 def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
     return len(bound) == len(ported) and all(map(eq, bound, ported))
 
 
-def to_bound_ported_sets_pair(objects: List[Any]) -> BoundPortedSetsPair:
-    return BoundSet(*objects), PortedSet(*objects)
+def are_bound_ported_vectors_equal(bound: BoundVector,
+                                   ported: PortedVector) -> bool:
+    return len(bound) == len(ported) and all(map(eq, bound, ported))
 
 
-def to_bound_ported_vectors_pair(objects: List[Any]) -> BoundPortedVectorsPair:
-    return BoundVector(*objects), PortedVector(*objects)
+def to_bound_ported_maps_pair(items: List[Item]) -> BoundPortedMapsPair:
+    return BoundMap(*items), PortedMap(*items)
+
+
+def to_bound_ported_sets_pair(values: List[Value]) -> BoundPortedSetsPair:
+    return BoundSet(*values), PortedSet(*values)
+
+
+def to_bound_ported_vectors_pair(values: List[Value]
+                                 ) -> BoundPortedVectorsPair:
+    return BoundVector(*values), PortedVector(*values)
