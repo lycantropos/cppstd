@@ -146,8 +146,9 @@ class Iterator {
     return *this;
   }
 
-  const typename RawCollection::value_type& operator*() const {
-    return *position;
+  typename Transformer::return_t operator*() const {
+    static const Transformer transform;
+    return transform(*position);
   }
 
   bool operator!=(const Iterator& other) const {
