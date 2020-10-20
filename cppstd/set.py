@@ -1,20 +1,16 @@
 from collections import abc
-from itertools import islice
 from typing import (Generic,
                     Iterator,
-                    Tuple,
-                    Union)
+                    Tuple)
 
-from dendroid import red_black
-from dendroid.hints import Set as RawSet
 from reprit.base import (generate_repr,
                          seekers)
 
+from .core import red_black
+from .core.hints import RawSet
 from .core.tokenization import (Token,
                                 Tokenizer)
 from .hints import Value
-
-AnyNode = Union[red_black.NIL, red_black.Node]
 
 
 @abc.MutableSet.register
@@ -185,7 +181,7 @@ class SetBackwardIterator(Iterator[Value]):
 
     def __init__(self,
                  index: int,
-                 node: AnyNode,
+                 node: red_black.AnyNode,
                  tree: red_black.Tree[Value, Value],
                  token: Token) -> None:
         self._index = index
@@ -228,7 +224,7 @@ class SetBackwardIterator(Iterator[Value]):
         return SetBackwardIterator(*self._move_node(-offset), self._tree,
                                    self._token)
 
-    def _move_node(self, offset: int) -> Tuple[int, AnyNode]:
+    def _move_node(self, offset: int) -> Tuple[int, red_black.AnyNode]:
         self._validate()
         index = self._index
         size = len(self._tree)
@@ -243,11 +239,12 @@ class SetBackwardIterator(Iterator[Value]):
                              if size
                              else 'Set is empty.')
         new_index = index + offset
-        return new_index, (_index_to_node(size - new_index - 1, self._tree)
+        return new_index, (red_black.index_to_node(size - new_index - 1,
+                                                   self._tree)
                            if new_index < size
                            else red_black.NIL)
 
-    def _to_validated_node(self) -> AnyNode:
+    def _to_validated_node(self) -> red_black.AnyNode:
         self._validate()
         return self._node
 
@@ -261,7 +258,7 @@ class SetForwardIterator(Iterator[Value]):
 
     def __init__(self,
                  index: int,
-                 node: AnyNode,
+                 node: red_black.AnyNode,
                  tree: red_black.Tree[Value, Value],
                  token: Token) -> None:
         self._index = index
@@ -303,7 +300,7 @@ class SetForwardIterator(Iterator[Value]):
         return SetForwardIterator(*self._move_node(-offset), self._tree,
                                   self._token)
 
-    def _move_node(self, offset: int) -> Tuple[int, AnyNode]:
+    def _move_node(self, offset: int) -> Tuple[int, red_black.AnyNode]:
         self._validate()
         index = self._index
         size = len(self._tree)
@@ -318,24 +315,14 @@ class SetForwardIterator(Iterator[Value]):
                              if size
                              else 'Set is empty.')
         new_index = index + offset
-        return new_index, (_index_to_node(new_index, self._tree)
+        return new_index, (red_black.index_to_node(new_index, self._tree)
                            if new_index < size
                            else red_black.NIL)
 
-    def _to_validated_node(self) -> AnyNode:
+    def _to_validated_node(self) -> red_black.AnyNode:
         self._validate()
         return self._node
 
     def _validate(self) -> None:
         if self._token.expired:
             raise ValueError('Iterator is invalidated.')
-
-
-def _node_to_index(node: red_black.Node, tree: red_black.Tree) -> int:
-    return next(index
-                for index, candidate in enumerate(tree)
-                if candidate is node)
-
-
-def _index_to_node(index: int, tree: red_black.Tree) -> red_black.Node:
-    return next(islice(tree, index, None))
