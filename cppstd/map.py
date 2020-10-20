@@ -41,6 +41,11 @@ class Map(Generic[Key, Value]):
             self._tokenizer.reset()
             self._raw.tree.remove(node)
 
+    def __eq__(self, other: 'Map[Key, Value]') -> bool:
+        return (self._raw == other._raw
+                if isinstance(other, Map)
+                else NotImplemented)
+
     def __len__(self) -> int:
         return len(self._raw)
 
