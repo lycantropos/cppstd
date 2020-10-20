@@ -33,6 +33,9 @@ class Map(Generic[Key, Value]):
 
     __repr__ = generate_repr(__init__)
 
+    def __contains__(self, key: Key) -> bool:
+        return key in self._raw
+
     def __delitem__(self, key: Key) -> None:
         node = self._raw.tree.find(key)
         if node is red_black.NIL:
