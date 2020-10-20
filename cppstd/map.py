@@ -33,6 +33,14 @@ class Map(Generic[Key, Value]):
 
     __repr__ = generate_repr(__init__)
 
+    def __delitem__(self, key: Key) -> None:
+        node = self._raw.tree.find(key)
+        if node is red_black.NIL:
+            raise ValueError('{!r} is not found.'.format(key))
+        else:
+            self._tokenizer.reset()
+            self._raw.tree.remove(node)
+
     def __len__(self) -> int:
         return len(self._raw)
 
