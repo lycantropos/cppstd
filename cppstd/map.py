@@ -65,6 +65,14 @@ class Map(Generic[Key, Value]):
                                        self._raw.tree,
                                        self._tokenizer.create())
 
+    def __setitem__(self, key: Key, value: Value) -> None:
+        node = self._raw.tree.find(key)
+        self._tokenizer.reset()
+        if node is red_black.NIL:
+            self._raw[key] = value
+        else:
+            node.value = value
+
     def clear(self) -> None:
         self._tokenizer.reset()
         self._raw.clear()
