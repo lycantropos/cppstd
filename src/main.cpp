@@ -121,7 +121,7 @@ class Iterator {
                          typename RawCollection::const_reverse_iterator,
                          typename RawCollection::const_iterator>;
 
-  Iterator(std::weak_ptr<RawCollection> raw_collection_ptr, Position&& position,
+  Iterator(std::weak_ptr<RawCollection> raw_collection_ptr, Position position,
            const Token& token)
       : _raw_collection_ptr(raw_collection_ptr),
         position(position),
@@ -141,8 +141,31 @@ class Iterator {
     return *this;
   }
 
+  const typename RawCollection::value_type& operator*() const {
+    return *position;
+  }
+
+  bool operator!=(const Iterator& other) const {
+    return to_position() != other.to_position();
+  }
+
   bool operator==(const Iterator& other) const {
     return to_position() == other.to_position();
+  }
+
+  Iterator operator++() {
+    validate();
+    if (position == to_end()) throw py::stop_iteration();
+    auto current_position = position;
+    position = std::next(position);
+    return {_raw_collection_ptr, current_position, _token};
+  }
+
+  Iterator& operator++(int) {
+    validate();
+    if (position == to_end()) throw py::stop_iteration();
+    position = std::next(position);
+    return *this;
   }
 
   const typename RawCollection::value_type& next() {
@@ -233,7 +256,7 @@ using VectorForwardIterator = ForwardIterator<RawVector>;
 template <class Iterable>
 IterableState iterable_to_state(const Iterable& self) {
   IterableState result;
-  for (const auto& element : self.to_raw()) result.append(element);
+  for (const auto& element : self) result.append(element);
   return result;
 }
 
@@ -490,8 +513,6 @@ class Set {
 
   std::size_t size() const { return _raw->size(); }
 
-  const RawSet& to_raw() const { return *_raw; }
-
  private:
   std::shared_ptr<RawSet> _raw;
   Tokenizer _tokenizer;
@@ -501,11 +522,10 @@ static std::ostream& operator<<(std::ostream& stream, const Set& set) {
   stream << C_STR(MODULE_NAME) "." SET_NAME "(";
   auto object = py::cast(set);
   if (Py_ReprEnter(object.ptr()) == 0) {
-    const auto& raw = set.to_raw();
-    if (!raw.empty()) {
-      auto position = raw.cbegin();
-      stream << *(position++);
-      for (; position != raw.end(); ++position) stream << ", " << *position;
+    if (set) {
+      auto position = set.begin();
+      stream << *position;
+      for (++position; position != set.end(); ++position) stream << ", " << *position;
     }
     Py_ReprLeave(object.ptr());
   } else {
@@ -805,8 +825,6 @@ class Vector {
 
   std::size_t size() const { return _raw->size(); }
 
-  const RawVector& to_raw() const { return *_raw; }
-
  private:
   std::shared_ptr<RawVector> _raw;
   Tokenizer _tokenizer;
@@ -817,10 +835,9 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   auto object = py::cast(vector);
   if (Py_ReprEnter(object.ptr()) == 0) {
     if (vector) {
-      const auto& raw = vector.to_raw();
-      stream << raw[0];
-      for (std::size_t index = 1; index < raw.size(); ++index)
-        stream << ", " << raw[index];
+      stream << vector.get_item(0);
+      for (std::size_t index = 1; index < vector.size(); ++index)
+        stream << ", " << vector.get_item(index);
     }
     Py_ReprLeave(object.ptr());
   } else {
