@@ -345,6 +345,12 @@ class Map {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
+  void set_item(Object key, Object value) {
+    auto& place = (*_raw)[key];
+    _tokenizer.reset();
+    place = value;
+  }
+
   std::size_t size() const { return _raw->size(); }
 
   MapValuesForwardIterator values() const {
@@ -975,6 +981,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__len__", &Map::size)
       .def("__repr__", to_repr<Map>)
       .def("__reversed__", &Map::reversed_keys)
+      .def("__setitem__", &Map::set_item, py::arg("key"), py::arg("value"))
       .def("begin", &Map::begin)
       .def("clear", &Map::clear)
       .def("end", &Map::end)
