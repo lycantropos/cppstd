@@ -324,6 +324,10 @@ class Map {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
+  MapBackwardIterator rend() const {
+    return {_raw, _raw->rend(), _tokenizer.create()};
+  }
+
   MapValuesForwardIterator values() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
@@ -952,6 +956,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("items", &Map::begin)
       .def("keys", &Map::keys)
       .def("rbegin", &Map::rbegin)
+      .def("rend", &Map::rend)
       .def("values", &Map::values);
 
   py::class_<MapBackwardIterator>(m, MAP_BACKWARD_ITERATOR_NAME)
