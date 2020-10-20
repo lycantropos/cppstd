@@ -963,6 +963,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Map{raw};
       }))
       .def(py::self == py::self)
+      .def("__bool__", &Map::operator bool)
       .def("__contains__", &Map::contains, py::arg("key"))
       .def("__delitem__", &Map::delete_item, py::arg("key"))
       .def("__iter__", &Map::keys)
