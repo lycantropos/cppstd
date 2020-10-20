@@ -65,6 +65,10 @@ class Map(Generic[Key, Value]):
                                        self._raw.tree,
                                        self._tokenizer.create())
 
+    def clear(self) -> None:
+        self._tokenizer.reset()
+        self._raw.clear()
+
     def items(self) -> MapForwardIterator[Key, Value]:
         return MapForwardIterator(0, self._raw.tree.min(), self._raw.tree,
                                   self._tokenizer.create())
