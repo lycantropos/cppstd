@@ -310,10 +310,12 @@ class Map {
     return {_raw, _raw->begin(), _tokenizer.create()};
   }
 
-  void delete_item(Object value) {
-    auto position = _raw->find(value);
+  bool contains(Object key) const { return _raw->find(key) != _raw->end(); }
+
+  void delete_item(Object key) {
+    auto position = _raw->find(key);
     if (position == _raw->end())
-      throw py::value_error(to_repr(value) + " is not found.");
+      throw py::value_error(to_repr(key) + " is not found.");
     _tokenizer.reset();
     _raw->erase(position);
   }
@@ -961,6 +963,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
         return Map{raw};
       }))
       .def(py::self == py::self)
+      .def("__contains__", &Map::contains, py::arg("key"))
       .def("__delitem__", &Map::delete_item, py::arg("key"))
       .def("__iter__", &Map::keys)
       .def("__len__", &Map::size)
