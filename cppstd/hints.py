@@ -1,3 +1,6 @@
-from typing import TypeVar
+from typing import (Tuple,
+                    TypeVar)
 
-Domain = TypeVar('Domain')
+Key = TypeVar('Key')
+Value = TypeVar('Value')
+Item = Tuple[Key, Value]

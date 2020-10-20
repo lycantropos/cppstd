@@ -12,23 +12,23 @@ from reprit.base import (generate_repr,
 
 from .core.tokenization import (Token,
                                 Tokenizer)
-from .hints import Domain
+from .hints import Value
 
 AnyNode = Union[red_black.NIL, red_black.Node]
 
 
 @abc.MutableSet.register
-class Set(Generic[Domain]):
+class Set(Generic[Value]):
     __slots__ = '_values', '_tokenizer'
 
-    def __init__(self, *values: Domain) -> None:
+    def __init__(self, *values: Value) -> None:
         self._values = red_black.set_(*values)
         self._tokenizer = Tokenizer()
 
     __repr__ = generate_repr(__init__,
                              field_seeker=seekers.complex_)
 
-    def __and__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __and__(self, other: 'Set[Value]') -> 'Set[Value]':
         return (self._from_raw(self._values & other._values)
                 if isinstance(other, Set)
                 else NotImplemented)
@@ -36,15 +36,15 @@ class Set(Generic[Domain]):
     def __bool__(self) -> bool:
         return bool(self._values)
 
-    def __contains__(self, value: Domain):
+    def __contains__(self, value: Value):
         return value in self._values
 
-    def __eq__(self, other: 'Set[Domain]') -> bool:
+    def __eq__(self, other: 'Set[Value]') -> bool:
         return (self._values == other._values
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __iand__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __iand__(self, other: 'Set[Value]') -> 'Set[Value]':
         if not isinstance(other, Set):
             return NotImplemented
         size = len(self._values)
@@ -58,7 +58,7 @@ class Set(Generic[Domain]):
                 self._values = common_values
         return self
 
-    def __ior__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __ior__(self, other: 'Set[Value]') -> 'Set[Value]':
         if not isinstance(other, Set):
             return NotImplemented
         extra_values = other._values - self._values
@@ -67,7 +67,7 @@ class Set(Generic[Domain]):
             self._values |= extra_values
         return self
 
-    def __isub__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __isub__(self, other: 'Set[Value]') -> 'Set[Value]':
         if not isinstance(other, Set):
             return NotImplemented
         common_values = self._values & other._values
@@ -76,11 +76,11 @@ class Set(Generic[Domain]):
             self._values -= common_values
         return self
 
-    def __iter__(self) -> 'SetForwardIterator[Domain]':
+    def __iter__(self) -> 'SetForwardIterator[Value]':
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
 
-    def __ixor__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __ixor__(self, other: 'Set[Value]') -> 'Set[Value]':
         if not isinstance(other, Set):
             return NotImplemented
         if other:
@@ -91,47 +91,47 @@ class Set(Generic[Domain]):
     def __len__(self) -> int:
         return len(self._values)
 
-    def __lt__(self, other: 'Set[Domain]') -> bool:
+    def __lt__(self, other: 'Set[Value]') -> bool:
         return (self._values < other._values
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __le__(self, other: 'Set[Domain]') -> bool:
+    def __le__(self, other: 'Set[Value]') -> bool:
         return (self._values <= other._values
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __or__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __or__(self, other: 'Set[Value]') -> 'Set[Value]':
         return (self._from_raw(self._values | other._values)
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __reversed__(self) -> 'SetBackwardIterator[Domain]':
+    def __reversed__(self) -> 'SetBackwardIterator[Value]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
 
-    def __sub__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __sub__(self, other: 'Set[Value]') -> 'Set[Value]':
         return (self._from_raw(self._values - other._values)
                 if isinstance(other, Set)
                 else NotImplemented)
 
-    def __xor__(self, other: 'Set[Domain]') -> 'Set[Domain]':
+    def __xor__(self, other: 'Set[Value]') -> 'Set[Value]':
         return (self._from_raw(self._values ^ other._values)
                 if isinstance(other, Set)
                 else NotImplemented)
 
     @classmethod
-    def _from_raw(cls, raw: RawSet[Domain]) -> 'Set[Domain]':
+    def _from_raw(cls, raw: RawSet[Value]) -> 'Set[Value]':
         result = Set()
         result._values = raw
         return result
 
-    def add(self, value: Domain) -> None:
+    def add(self, value: Value) -> None:
         if value not in self._values:
             self._tokenizer.reset()
             self._values.add(value)
 
-    def begin(self) -> 'SetForwardIterator[Domain]':
+    def begin(self) -> 'SetForwardIterator[Value]':
         return SetForwardIterator(0, self._values.tree.min(),
                                   self._values.tree, self._tokenizer.create())
 
@@ -139,35 +139,35 @@ class Set(Generic[Domain]):
         self._tokenizer.reset()
         self._values.clear()
 
-    def discard(self, value: Domain) -> None:
+    def discard(self, value: Value) -> None:
         node = self._values.tree.find(value)
         if node is not red_black.NIL:
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
-    def end(self) -> 'SetForwardIterator[Domain]':
+    def end(self) -> 'SetForwardIterator[Value]':
         return SetForwardIterator(len(self._values), red_black.NIL,
                                   self._values.tree, self._tokenizer.create())
 
-    def isdisjoint(self, other: 'Set[Domain]') -> bool:
+    def isdisjoint(self, other: 'Set[Value]') -> bool:
         return self._values.isdisjoint(other._values)
 
-    def max(self) -> Domain:
+    def max(self) -> Value:
         return self._values.max()
 
-    def min(self) -> Domain:
+    def min(self) -> Value:
         return self._values.min()
 
-    def pop(self) -> Domain:
+    def pop(self) -> Value:
         if self._values:
             self._tokenizer.reset()
         return self._values.pop()
 
-    def rbegin(self) -> 'SetBackwardIterator[Domain]':
+    def rbegin(self) -> 'SetBackwardIterator[Value]':
         return SetBackwardIterator(0, self._values.tree.max(),
                                    self._values.tree, self._tokenizer.create())
 
-    def remove(self, value: Domain) -> None:
+    def remove(self, value: Value) -> None:
         node = self._values.tree.find(value)
         if node is red_black.NIL:
             raise ValueError('{!r} is not found.'.format(value))
@@ -175,45 +175,45 @@ class Set(Generic[Domain]):
             self._tokenizer.reset()
             self._values.tree.remove(node)
 
-    def rend(self) -> 'SetBackwardIterator[Domain]':
+    def rend(self) -> 'SetBackwardIterator[Value]':
         return SetBackwardIterator(len(self._values), red_black.NIL,
                                    self._values.tree, self._tokenizer.create())
 
 
-class SetBackwardIterator(Iterator[Domain]):
+class SetBackwardIterator(Iterator[Value]):
     __slots__ = '_index', '_node', '_tree', '_token'
 
     def __init__(self,
                  index: int,
                  node: AnyNode,
-                 tree: red_black.Tree[Domain, Domain],
+                 tree: red_black.Tree[Value, Value],
                  token: Token) -> None:
         self._index = index
         self._node = node
         self._tree = tree
         self._token = token
 
-    def __add__(self, offset: int) -> 'SetBackwardIterator[Domain]':
+    def __add__(self, offset: int) -> 'SetBackwardIterator[Value]':
         return SetBackwardIterator(*self._move_node(offset), self._tree,
                                    self._token)
 
-    def __eq__(self, other: 'SetBackwardIterator[Domain]') -> bool:
+    def __eq__(self, other: 'SetBackwardIterator[Value]') -> bool:
         return (self._to_validated_node() is other._to_validated_node()
                 if isinstance(other, SetBackwardIterator)
                 else NotImplemented)
 
-    def __iadd__(self, offset: int) -> 'SetBackwardIterator[Domain]':
+    def __iadd__(self, offset: int) -> 'SetBackwardIterator[Value]':
         self._index, self._node = self._move_node(offset)
         return self
 
-    def __isub__(self, offset: int) -> 'SetBackwardIterator[Domain]':
+    def __isub__(self, offset: int) -> 'SetBackwardIterator[Value]':
         self._index, self._node = self._move_node(-offset)
         return self
 
-    def __iter__(self) -> 'SetBackwardIterator[Domain]':
+    def __iter__(self) -> 'SetBackwardIterator[Value]':
         return self
 
-    def __next__(self) -> Domain:
+    def __next__(self) -> Value:
         node = self._to_validated_node()
         try:
             result = node.value
@@ -224,7 +224,7 @@ class SetBackwardIterator(Iterator[Domain]):
             self._node = self._tree.predecessor(self._node)
             return result
 
-    def __sub__(self, offset: int) -> 'SetBackwardIterator[Domain]':
+    def __sub__(self, offset: int) -> 'SetBackwardIterator[Value]':
         return SetBackwardIterator(*self._move_node(-offset), self._tree,
                                    self._token)
 
@@ -256,40 +256,40 @@ class SetBackwardIterator(Iterator[Domain]):
             raise ValueError('Iterator is invalidated.')
 
 
-class SetForwardIterator(Iterator[Domain]):
+class SetForwardIterator(Iterator[Value]):
     __slots__ = '_index', '_node', '_tree', '_token'
 
     def __init__(self,
                  index: int,
                  node: AnyNode,
-                 tree: red_black.Tree[Domain, Domain],
+                 tree: red_black.Tree[Value, Value],
                  token: Token) -> None:
         self._index = index
         self._node = node
         self._tree = tree
         self._token = token
 
-    def __add__(self, offset: int) -> 'SetForwardIterator[Domain]':
+    def __add__(self, offset: int) -> 'SetForwardIterator[Value]':
         return SetForwardIterator(*self._move_node(offset), self._tree,
                                   self._token)
 
-    def __eq__(self, other: 'SetForwardIterator[Domain]') -> bool:
+    def __eq__(self, other: 'SetForwardIterator[Value]') -> bool:
         return (self._to_validated_node() is other._to_validated_node()
                 if isinstance(other, SetForwardIterator)
                 else NotImplemented)
 
-    def __iadd__(self, offset: int) -> 'SetForwardIterator[Domain]':
+    def __iadd__(self, offset: int) -> 'SetForwardIterator[Value]':
         self._index, self._node = self._move_node(offset)
         return self
 
-    def __isub__(self, offset: int) -> 'SetForwardIterator[Domain]':
+    def __isub__(self, offset: int) -> 'SetForwardIterator[Value]':
         self._index, self._node = self._move_node(-offset)
         return self
 
-    def __iter__(self) -> 'SetForwardIterator[Domain]':
+    def __iter__(self) -> 'SetForwardIterator[Value]':
         return self
 
-    def __next__(self) -> Domain:
+    def __next__(self) -> Value:
         node = self._to_validated_node()
         try:
             result = node.value
@@ -299,7 +299,7 @@ class SetForwardIterator(Iterator[Domain]):
             self._node = self._tree.successor(self._node)
             return result
 
-    def __sub__(self, offset: int) -> 'SetForwardIterator[Domain]':
+    def __sub__(self, offset: int) -> 'SetForwardIterator[Value]':
         return SetForwardIterator(*self._move_node(-offset), self._tree,
                                   self._token)
 
