@@ -130,14 +130,6 @@ class Iterator {
     return *position;
   }
 
-  bool operator!=(const Iterator& other) const {
-    return to_position() != other.to_position();
-  }
-
-  bool operator==(const Iterator& other) const {
-    return to_position() == other.to_position();
-  }
-
   Position& to_position() {
     validate();
     return position;
@@ -191,6 +183,36 @@ class Iterator {
     if (_token.expired()) throw py::value_error("Iterator is invalidated.");
   }
 };
+
+template <class RawCollection, bool reversed>
+bool operator!=(const Iterator<RawCollection, reversed>& left,
+                const Iterator<RawCollection, reversed>& right) {
+  return left.to_position() != right.to_position();
+}
+
+template <class RawCollection, bool reversed>
+bool operator==(const Iterator<RawCollection, reversed>& left,
+                const Iterator<RawCollection, reversed>& right) {
+  return left.to_position() == right.to_position();
+}
+
+template <class RawCollection, bool reversed>
+static bool operator<=(const Iterator<RawCollection, reversed>& self,
+                       const Iterator<RawCollection, reversed>& other) {
+  if (!self.has_same_collection_with(other))
+    throw py::value_error(
+        "Comparing iterators of different collections is prohibited.");
+  return self.to_position() <= other.to_position();
+}
+
+template <class RawCollection, bool reversed>
+static bool operator<(const Iterator<RawCollection, reversed>& self,
+                      const Iterator<RawCollection, reversed>& other) {
+  if (!self.has_same_collection_with(other))
+    throw py::value_error(
+        "Comparing iterators of different collections is prohibited.");
+  return self.to_position() < other.to_position();
+}
 
 template <class RawCollection, bool reversed>
 static typename Iterator<RawCollection, reversed>::Position
@@ -252,24 +274,6 @@ Iterator<RawCollection, reversed>& operator++(
   if (position == iterator.to_end()) throw py::stop_iteration();
   ++position;
   return iterator;
-}
-
-template <class RawCollection, bool reversed>
-static bool operator<(const Iterator<RawCollection, reversed>& self,
-                      const Iterator<RawCollection, reversed>& other) {
-  if (!self.has_same_collection_with(other))
-    throw py::value_error(
-        "Comparing iterators of different collections is prohibited.");
-  return self.to_position() < other.to_position();
-}
-
-template <class RawCollection, bool reversed>
-static bool operator<=(const Iterator<RawCollection, reversed>& self,
-                       const Iterator<RawCollection, reversed>& other) {
-  if (!self.has_same_collection_with(other))
-    throw py::value_error(
-        "Comparing iterators of different collections is prohibited.");
-  return self.to_position() <= other.to_position();
 }
 
 template <class RawCollection>
