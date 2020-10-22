@@ -397,122 +397,19 @@ class Set {
  public:
   Set(const RawSet& raw) : _raw(std::make_shared<RawSet>(raw)), _tokenizer() {}
 
-  Set operator&(const Set& other) const {
-    RawSet raw;
-    std::set_intersection(_raw->begin(), _raw->end(), other._raw->begin(),
-                          other._raw->end(), std::inserter(raw, raw.end()));
-    return {raw};
-  }
+  bool operator<(const Set& other) const { return *_raw < *other._raw; }
 
-  Set& operator&=(const Set& other) {
-    RawSet raw;
-    std::set_intersection(_raw->begin(), _raw->end(), other._raw->begin(),
-                          other._raw->end(), std::inserter(raw, raw.end()));
-    if (raw.size() != _raw->size()) {
-      _tokenizer.reset();
-      *_raw = raw;
-    }
-    return *this;
-  }
-
-  Set operator-(const Set& other) const {
-    RawSet raw;
-    std::set_difference(_raw->begin(), _raw->end(), other._raw->begin(),
-                        other._raw->end(), std::inserter(raw, raw.end()));
-    return {raw};
-  }
-
-  Set& operator-=(const Set& other) {
-    RawSet common_values;
-    std::set_intersection(other._raw->begin(), other._raw->end(), _raw->begin(),
-                          _raw->end(),
-                          std::inserter(common_values, common_values.end()));
-    if (!common_values.empty()) {
-      _tokenizer.reset();
-      RawSet* result = new RawSet{};
-      std::set_difference(_raw->begin(), _raw->end(), common_values.begin(),
-                          common_values.end(),
-                          std::inserter(*result, result->end()));
-      _raw.reset(result);
-    }
-    return *this;
-  }
-
-  bool operator<(const Set& other) const {
-    const auto& raw = *_raw;
-    const auto& other_raw = *other._raw;
-    const auto& other_end = other_raw.cend();
-    if (raw.size() >= other_raw.size()) return false;
-    for (const auto& element : raw)
-      if (other_raw.find(element) == other_end) return false;
-    return true;
-  }
-
-  bool operator<=(const Set& other) const {
-    const auto& raw = *_raw;
-    const auto& other_raw = *other._raw;
-    const auto& other_end = other_raw.cend();
-    if (raw.size() > other_raw.size()) return false;
-    for (const auto& element : raw)
-      if (other_raw.find(element) == other_end) return false;
-    return true;
-  }
+  bool operator<=(const Set& other) const { return *_raw <= *other._raw; }
 
   bool operator==(const Set& other) const { return *_raw == *other._raw; }
 
-  Set operator^(const Set& other) const {
-    RawSet raw;
-    std::set_symmetric_difference(_raw->begin(), _raw->end(),
-                                  other._raw->begin(), other._raw->end(),
-                                  std::inserter(raw, raw.end()));
-    return {raw};
-  }
-
-  Set& operator^=(const Set& other) {
-    if (other) {
-      _tokenizer.reset();
-      RawSet* result = new RawSet{};
-      std::set_symmetric_difference(_raw->begin(), _raw->end(),
-                                    other._raw->begin(), other._raw->end(),
-                                    std::inserter(*result, result->end()));
-      _raw.reset(result);
-    }
-    return *this;
-  }
-
-  Set operator|(const Set& other) const {
-    RawSet raw;
-    std::set_union(other._raw->begin(), other._raw->end(), _raw->begin(),
-                   _raw->end(), std::inserter(raw, raw.end()));
-    return {raw};
-  }
-
-  Set& operator|=(const Set& other) {
-    RawSet extra_values;
-    std::set_difference(other._raw->begin(), other._raw->end(), _raw->begin(),
-                        _raw->end(),
-                        std::inserter(extra_values, extra_values.end()));
-    if (!extra_values.empty()) {
-      _tokenizer.reset();
-      _raw->insert(extra_values.begin(), extra_values.end());
-    }
-    return *this;
-  }
-
-  operator bool() const { return !_raw->empty(); }
+  bool empty() const { return _raw->empty(); }
 
   static Set from_state(IterableState state) {
     RawSet raw;
     for (auto& element : state)
       raw.insert(py::reinterpret_borrow<Object>(element));
     return {raw};
-  }
-
-  void add(Object value) {
-    auto position = _raw->find(value);
-    if (position != _raw->end()) return;
-    _tokenizer.reset();
-    _raw->insert(value);
   }
 
   SetForwardIterator begin() const {
@@ -524,62 +421,12 @@ class Set {
     return _raw->clear();
   }
 
-  bool contains(Object value) const { return _raw->find(value) != _raw->end(); }
-
-  void discard(Object value) {
-    auto position = _raw->find(value);
-    if (position == _raw->end()) return;
-    _tokenizer.reset();
-    _raw->erase(position);
-  }
-
   SetForwardIterator end() const {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
-  bool isdisjoint(const Set& other) const {
-    const auto& raw = *_raw;
-    const auto& other_raw = *other._raw;
-    if (raw.size() < other_raw.size()) {
-      const auto& other_end = other_raw.cend();
-      for (const auto& element : raw)
-        if (other_raw.find(element) != other_end) return false;
-    } else {
-      const auto& end = raw.cend();
-      for (const auto& element : other_raw)
-        if (raw.find(element) != end) return false;
-    }
-    return true;
-  }
-
-  Object max() const {
-    if (_raw->empty()) throw py::value_error("Set is empty.");
-    return *_raw->rbegin();
-  }
-
-  Object min() const {
-    if (_raw->empty()) throw py::value_error("Set is empty.");
-    return *_raw->begin();
-  }
-
-  Object pop() {
-    if (_raw->empty()) throw py::value_error("Set is empty.");
-    _tokenizer.reset();
-    const auto position = _raw->cbegin();
-    _raw->erase(position);
-    return *position;
-  }
-
   SetBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
-  }
-
-  void remove(Object value) {
-    auto position = _raw->find(value);
-    if (position == _raw->end())
-      throw py::value_error(to_repr(value) + " is not found.");
-    _tokenizer.reset();
-    _raw->erase(position);
   }
 
   SetBackwardIterator rend() const {
@@ -597,7 +444,7 @@ static std::ostream& operator<<(std::ostream& stream, const Set& set) {
   stream << C_STR(MODULE_NAME) "." SET_NAME "(";
   auto object = py::cast(set);
   if (Py_ReprEnter(object.ptr()) == 0) {
-    if (set) {
+    if (!set.empty()) {
       auto position = set.begin();
       stream << *position;
       for (++position; position != set.end(); ++position)
@@ -775,34 +622,18 @@ PYBIND11_MODULE(MODULE_NAME, m) {
           raw.insert(py::reinterpret_borrow<Object>(element));
         return Set{raw};
       }))
-      .def(py::self & py::self)
-      .def(py::self &= py::self)
-      .def(py::self - py::self)
-      .def(py::self -= py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
       .def(py::self == py::self)
-      .def(py::self ^ py::self)
-      .def(py::self ^= py::self)
-      .def(py::self | py::self)
-      .def(py::self |= py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
-      .def("__bool__", &Set::operator bool)
-      .def("__contains__", &Set::contains)
-      .def("__len__", &Set::size)
       .def("__repr__", to_repr<Set>)
-      .def("add", &Set::add)
       .def("begin", &Set::begin)
       .def("clear", &Set::clear)
-      .def("discard", &Set::discard)
-      .def("isdisjoint", &Set::isdisjoint)
+      .def("empty", &Set::empty)
       .def("end", &Set::end)
-      .def("max", &Set::max)
-      .def("min", &Set::min)
-      .def("pop", &Set::pop)
       .def("rbegin", &Set::rbegin)
-      .def("remove", &Set::remove, py::arg("value"))
-      .def("rend", &Set::rend);
+      .def("rend", &Set::rend)
+      .def("size", &Set::size);
 
   py::class_<SetBackwardIterator>(PySet, REVERSED_ITERATOR_NAME)
       .def(py::self == py::self)
