@@ -301,8 +301,6 @@ class Map {
 
   bool operator==(const Map& other) const { return *_raw == *other._raw; }
 
-  operator bool() const { return !_raw->empty(); }
-
   static Map from_state(IterableState state) {
     RawMap raw;
     for (auto& element : state) {
@@ -321,15 +319,7 @@ class Map {
     return _raw->clear();
   }
 
-  bool contains(Object key) const { return _raw->find(key) != _raw->end(); }
-
-  void delete_item(Object key) {
-    auto position = _raw->find(key);
-    if (position == _raw->end())
-      throw py::value_error(to_repr(key) + " is not found.");
-    _tokenizer.reset();
-    _raw->erase(position);
-  }
+  bool empty() const { return _raw->empty(); }
 
   MapForwardIterator end() const {
     return {_raw, _raw->end(), _tokenizer.create()};
@@ -380,7 +370,7 @@ static std::ostream& operator<<(std::ostream& stream, const Map& map) {
   stream << C_STR(MODULE_NAME) "." MAP_NAME "(";
   auto object = py::cast(map);
   if (Py_ReprEnter(object.ptr()) == 0) {
-    if (map) {
+    if (!map.empty()) {
       auto position = map.begin();
       stream << *position;
       for (++position; position != map.end(); ++position)
@@ -594,17 +584,15 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       }))
       .def(py::pickle(&iterable_to_state<Map>, &Map::from_state))
       .def(py::self == py::self)
-      .def("__bool__", &Map::operator bool)
-      .def("__contains__", &Map::contains, py::arg("key"))
-      .def("__delitem__", &Map::delete_item, py::arg("key"))
-      .def("__len__", &Map::size)
       .def("__repr__", to_repr<Map>)
       .def("__setitem__", &Map::set_item, py::arg("key"), py::arg("value"))
       .def("begin", &Map::begin)
       .def("clear", &Map::clear)
+      .def("empty", &Map::empty)
       .def("end", &Map::end)
       .def("rbegin", &Map::rbegin)
-      .def("rend", &Map::rend);
+      .def("rend", &Map::rend)
+      .def("size", &Map::size);
 
   py::class_<MapBackwardIterator>(PyMap, REVERSED_ITERATOR_NAME)
       .def(py::self == py::self)
