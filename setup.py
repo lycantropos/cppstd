@@ -30,7 +30,7 @@ def has_flag(compiler: CCompiler, name: str) -> bool:
 
 def cpp_flag(compiler: CCompiler,
              *,
-             min_standard_version: int = 11) -> str:
+             min_standard_version: int = 14) -> str:
     """
     Returns the -std=c++[11|...] compiler flag.
     The newer version is preferred when available.
