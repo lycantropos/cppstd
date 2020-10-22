@@ -20,7 +20,7 @@ from cppstd.hints import (Item,
                           Value)
 from cppstd.map import Map as PortedMap
 from cppstd.set import Set as PortedSet
-from cppstd.vector import Vector as PortedVector
+from cppstd.vector import vector as PortedVector
 
 Domain = TypeVar('Domain')
 Range = TypeVar('Range')
