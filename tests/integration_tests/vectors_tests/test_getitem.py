@@ -3,8 +3,7 @@ from typing import Tuple
 import pytest
 from hypothesis import given
 
-from tests.utils import (BoundPortedVectorsPair,
-                         are_bound_ported_vectors_equal)
+from tests.utils import BoundPortedVectorsPair
 from . import strategies
 
 
@@ -26,12 +25,3 @@ def test_invalid_index(pair_with_index: Tuple[BoundPortedVectorsPair, int]
         bound[index]
     with pytest.raises(IndexError):
         ported[index]
-
-
-@given(strategies.vectors_pairs_with_slices)
-def test_slice(pair_with_slice: Tuple[BoundPortedVectorsPair, int]) -> None:
-    (bound, ported), slice_ = pair_with_slice
-
-    bound_result, ported_result = bound[slice_], ported[slice_]
-
-    assert are_bound_ported_vectors_equal(bound_result, ported_result)

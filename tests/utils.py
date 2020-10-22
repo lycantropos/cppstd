@@ -11,15 +11,15 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from _cppstd import (Map as BoundMap,
-                     Set as BoundSet,
-                     Vector as BoundVector)
+from _cppstd import (map as BoundMap,
+                     set as BoundSet,
+                     vector as BoundVector)
 from hypothesis.strategies import SearchStrategy
 
 from cppstd.hints import (Item,
                           Value)
-from cppstd.map import Map as PortedMap
-from cppstd.set import Set as PortedSet
+from cppstd.map import map as PortedMap
+from cppstd.set import set as PortedSet
 from cppstd.vector import vector as PortedVector
 
 Domain = TypeVar('Domain')
@@ -83,17 +83,16 @@ item_to_key = itemgetter(0)
 
 
 def are_bound_ported_maps_equal(bound: BoundMap, ported: PortedMap) -> bool:
-    return len(bound) == len(ported) and all(map(eq, bound.items(),
-                                                 ported.items()))
+    return bound.size() == ported.size()
 
 
 def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
-    return len(bound) == len(ported) and all(map(eq, bound, ported))
+    return bound.size() == ported.size()
 
 
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
-    return len(bound) == len(ported) and all(map(eq, bound, ported))
+    return bound.size() == ported.size()
 
 
 def to_bound_ported_maps_pair(items: List[Item]) -> BoundPortedMapsPair:

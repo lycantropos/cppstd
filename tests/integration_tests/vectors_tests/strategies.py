@@ -1,13 +1,9 @@
 import sys
-from typing import (Any,
-                    Callable,
-                    List,
-                    Tuple)
+from typing import Tuple
 
 from hypothesis import strategies
 
 from tests.utils import (BoundPortedVectorsPair,
-                         Domain,
                          Strategy,
                          to_bound_ported_vectors_pair)
 
@@ -29,76 +25,11 @@ non_empty_vectors_pairs = strategies.builds(to_bound_ported_vectors_pair,
                                             non_empty_objects_lists)
 
 
-def to_non_empty_vectors_pairs_with_their_elements(
-        values: List[Any]) -> Strategy[Tuple[BoundPortedVectorsPair, Any]]:
-    pair = to_bound_ported_vectors_pair(values)
-    return strategies.tuples(strategies.just(pair),
-                             strategies.sampled_from(values))
-
-
-non_empty_vectors_pairs_with_their_elements = non_empty_objects_lists.flatmap(
-        to_non_empty_vectors_pairs_with_their_elements)
-
-
-def to_vectors_pairs_with_non_their_elements(
-        values: List[Any]) -> Strategy[Tuple[BoundPortedVectorsPair, Any]]:
-    pair = to_bound_ported_vectors_pair(values)
-    return strategies.tuples(strategies.just(pair),
-                             objects.filter(lambda candidate
-                                            : candidate not in values)
-                             if values
-                             else objects)
-
-
-vectors_pairs_with_non_their_elements = (
-    objects_lists.flatmap(to_vectors_pairs_with_non_their_elements))
-
-
-@strategies.composite
-def to_non_empty_vectors_pairs_with_starts_stops_and_their_elements(
-        draw: Callable[[Strategy[Domain]], Domain],
-        values: List[Any]
-) -> Strategy[Tuple[BoundPortedVectorsPair, int, int, Any]]:
-    pair = to_bound_ported_vectors_pair(values)
-    size = len(values)
-    start = draw(strategies.integers(MIN_INDEX, size - 1))
-    min_positive_stop = max(-size, start) % size + 1
-    stops = strategies.integers(min_positive_stop, MAX_INDEX)
-    stop = draw(stops | strategies.integers(min_positive_stop % -size, -1)
-                if min_positive_stop < size
-                else stops)
-    return pair, start, stop, draw(strategies.sampled_from(values[start:stop]))
-
-
-non_empty_vectors_pairs_with_starts_stops_and_their_elements = (
-    non_empty_objects_lists.flatmap(
-            to_non_empty_vectors_pairs_with_starts_stops_and_their_elements))
-
-
-@strategies.composite
-def to_vectors_pairs_with_starts_stops_and_non_their_elements(
-        draw: Callable[[Strategy[Domain]], Domain],
-        values: List[Any]
-) -> Strategy[Tuple[BoundPortedVectorsPair, int, int, Any]]:
-    pair = to_bound_ported_vectors_pair(values)
-    start, stop = draw(indices), draw(indices)
-    sub_values = values[start:stop]
-    return (pair, start, stop,
-            draw(objects.filter(lambda candidate: candidate not in sub_values)
-                 if sub_values
-                 else objects))
-
-
-vectors_pairs_with_starts_stops_and_non_their_elements = (
-    (objects_lists
-     .flatmap(to_vectors_pairs_with_starts_stops_and_non_their_elements)))
-
-
 def to_non_empty_vectors_pairs_with_indices(
         pair: BoundPortedVectorsPair
 ) -> Strategy[Tuple[BoundPortedVectorsPair, int]]:
     bound, _ = pair
-    size = len(bound)
+    size = bound.size()
     return strategies.tuples(strategies.just(pair),
                              strategies.integers(-size, size - 1))
 
@@ -111,7 +42,7 @@ def to_vectors_pairs_with_invalid_indices(
         pair: BoundPortedVectorsPair
 ) -> Strategy[Tuple[BoundPortedVectorsPair, int]]:
     bound, _ = pair
-    size = len(bound)
+    size = bound.size()
     return strategies.tuples(strategies.just(pair),
                              strategies.integers(MIN_INDEX, -size - 1)
                              | strategies.integers(size + 1, MAX_INDEX))
@@ -119,37 +50,3 @@ def to_vectors_pairs_with_invalid_indices(
 
 vectors_pairs_with_invalid_indices = vectors_pairs.flatmap(
         to_vectors_pairs_with_invalid_indices)
-
-
-def to_vectors_pairs_with_slices(
-        pair: BoundPortedVectorsPair
-) -> Strategy[Tuple[BoundPortedVectorsPair, slice]]:
-    bound, _ = pair
-    size = len(bound)
-    return strategies.tuples(strategies.just(pair), strategies.slices(size))
-
-
-vectors_pairs_with_slices = (vectors_pairs
-                             .flatmap(to_vectors_pairs_with_slices))
-
-
-@strategies.composite
-def to_vectors_pairs_with_slices_and_iterables_pairs(
-        draw: Callable[[Strategy[Domain]], Domain],
-        pair: BoundPortedVectorsPair
-) -> Strategy[Tuple[BoundPortedVectorsPair, slice, List[Any]]]:
-    bound, _ = pair
-    size = len(bound)
-    slice_ = draw(strategies.slices(size))
-    slice_size = len(bound[slice_])
-    return pair, slice_, draw((objects_lists
-                               if slice_.step == 1
-                               else strategies.lists(objects,
-                                                     min_size=slice_size,
-                                                     max_size=slice_size))
-                              if slice_size
-                              else empty_lists)
-
-
-vectors_pairs_with_slices_and_objects_lists = vectors_pairs.flatmap(
-        to_vectors_pairs_with_slices_and_iterables_pairs)

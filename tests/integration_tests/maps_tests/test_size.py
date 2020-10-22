@@ -8,4 +8,4 @@ from . import strategies
 def test_basic(pair: BoundPortedMapsPair) -> None:
     bound, ported = pair
 
-    assert bool(bound) is bool(ported)
+    assert bound.size() == ported.size()

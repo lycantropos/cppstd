@@ -12,5 +12,4 @@ def test_properties(objects: List[Any]) -> None:
     result = PortedSet(*objects)
 
     unique_objects = frozenset(objects)
-    assert len(result) == len(unique_objects)
-    assert list(result) == sorted(unique_objects)
+    assert result.size() == len(unique_objects)

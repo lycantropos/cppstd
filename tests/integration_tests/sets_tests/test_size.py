@@ -8,4 +8,4 @@ from . import strategies
 def test_basic(pair: BoundPortedSetsPair) -> None:
     bound, ported = pair
 
-    assert len(bound) == len(ported)
+    assert bound.size() == ported.size()

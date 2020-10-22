@@ -7,13 +7,13 @@ from . import strategies
 
 @given(strategies.sets)
 def test_sign(set: PortedSet) -> None:
-    result = len(set)
+    result = set.size()
 
     assert result >= 0
 
 
 @given(strategies.sets)
 def test_connection_with_bool(set: PortedSet) -> None:
-    result = len(set)
+    result = set.size()
 
-    assert equivalence(bool(result), bool(set))
+    assert equivalence(bool(result), not set.empty())

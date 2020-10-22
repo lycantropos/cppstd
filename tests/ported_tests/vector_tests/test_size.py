@@ -7,13 +7,13 @@ from . import strategies
 
 @given(strategies.vectors)
 def test_sign(vector: PortedVector) -> None:
-    result = len(vector)
+    result = vector.size()
 
     assert result >= 0
 
 
 @given(strategies.vectors)
 def test_connection_with_bool(vector: PortedVector) -> None:
-    result = len(vector)
+    result = vector.size()
 
-    assert equivalence(bool(result), bool(vector))
+    assert equivalence(bool(result), not vector.empty())

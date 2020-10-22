@@ -11,5 +11,4 @@ from . import strategies
 def test_properties(objects: List[Any]) -> None:
     result = PortedVector(*objects)
 
-    assert len(result) == len(objects)
-    assert list(result) == objects
+    assert result.size() == len(objects)

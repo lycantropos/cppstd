@@ -1,6 +1,7 @@
 from hypothesis import given
 
-from tests.utils import BoundPortedVectorsPair
+from tests.utils import (BoundPortedVectorsPair,
+                         equivalence)
 from . import strategies
 
 
@@ -8,4 +9,4 @@ from . import strategies
 def test_basic(pair: BoundPortedVectorsPair) -> None:
     bound, ported = pair
 
-    assert len(bound) == len(ported)
+    assert equivalence(bound.empty(), ported.empty())
