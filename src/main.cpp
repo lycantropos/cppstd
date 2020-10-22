@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -125,7 +126,7 @@ class Iterator {
         position(position),
         _token(token){};
 
-  const typename RawCollection::value_type& operator*() const {
+  typename std::iterator_traits<Position>::value_type operator*() const {
     return *position;
   }
 
