@@ -9,76 +9,41 @@ from .hints import (Item,
                     Value)
 
 
-class MapForwardIterator(red_black.TreeForwardIterator, Generic[Key, Value]):
-    def __next__(self) -> Item:
-        return super().__next__().item
+class map(Generic[Key, Value]):
+    class iterator(red_black.TreeIterator, Generic[Key, Value]):
+        pass
 
+    __slots__ = '_items', '_tokenizer'
 
-class MapKeysBackwardIterator(red_black.TreeBackwardIterator, Generic[Key]):
-    def __next__(self) -> Key:
-        return super().__next__().key
-
-
-class MapKeysForwardIterator(red_black.TreeForwardIterator, Generic[Key]):
-    def __next__(self) -> Key:
-        return super().__next__().key
-
-
-class Map(Generic[Key, Value]):
-    __slots__ = '_raw', '_tokenizer'
-
-    def __init__(self, *items: Item) -> None:
-        self._raw = red_black.map_(*items)
+    def __init__(self, *_items: Item) -> None:
+        self._items = red_black.map_(*_items)
         self._tokenizer = Tokenizer()
 
     __repr__ = generate_repr(__init__)
 
-    def __bool__(self) -> bool:
-        return bool(self._raw)
-
-    def __contains__(self, key: Key) -> bool:
-        return key in self._raw
-
-    def __delitem__(self, key: Key) -> None:
-        node = self._raw.tree.find(key)
-        if node is red_black.NIL:
-            raise ValueError('{!r} is not found.'.format(key))
-        else:
-            self._tokenizer.reset()
-            self._raw.tree.remove(node)
-
-    def __eq__(self, other: 'Map[Key, Value]') -> bool:
-        return (self._raw == other._raw
-                if isinstance(other, Map)
+    def __eq__(self, other: 'map[Key, Value]') -> bool:
+        return (self._items == other._items
+                if isinstance(other, map)
                 else NotImplemented)
 
-    def __len__(self) -> int:
-        return len(self._raw)
-
-    def __iter__(self) -> MapKeysForwardIterator[Key]:
-        return MapKeysForwardIterator(0, self._raw.tree.min(),
-                                      self._raw.tree,
-                                      self._tokenizer.create())
-
-    def __reversed__(self) -> MapKeysBackwardIterator[Key]:
-        return MapKeysBackwardIterator(0, self._raw.tree.max(),
-                                       self._raw.tree,
-                                       self._tokenizer.create())
-
     def __setitem__(self, key: Key, value: Value) -> None:
-        node = self._raw.tree.find(key)
+        node = self._items.tree.find(key)
         self._tokenizer.reset()
         if node is red_black.NIL:
-            self._raw[key] = value
+            self._items[key] = value
         else:
             node.value = value
 
+    def begin(self) -> iterator[Key, Value]:
+        return self.iterator(0, self._items.tree.min(), self._items.tree,
+                             self._tokenizer.create())
+
     def clear(self) -> None:
         self._tokenizer.reset()
-        self._raw.clear()
+        self._items.clear()
 
-    def items(self) -> MapForwardIterator[Key, Value]:
-        return MapForwardIterator(0, self._raw.tree.min(), self._raw.tree,
-                                  self._tokenizer.create())
+    def empty(self) -> bool:
+        return not self._items
 
-    keys = __iter__
+    def size(self) -> int:
+        return len(self._items)
