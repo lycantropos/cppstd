@@ -20,7 +20,7 @@ namespace py = pybind11;
 #define C_STR(a) C_STR_HELPER(a)
 #define ITERATOR_NAME "iterator"
 #define MAP_NAME "map"
-#define REVERSED_ITERATOR_NAME "reversed_iterator"
+#define REVERSE_ITERATOR_NAME "reverse_iterator"
 #define SET_NAME "set"
 #define VECTOR_NAME "vector"
 #ifndef VERSION_INFO
@@ -594,7 +594,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("rend", &Map::rend)
       .def("size", &Map::size);
 
-  py::class_<MapBackwardIterator>(PyMap, REVERSED_ITERATOR_NAME)
+  py::class_<MapBackwardIterator>(PyMap, REVERSE_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self != py::self);
 
@@ -623,7 +623,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("rend", &Set::rend)
       .def("size", &Set::size);
 
-  py::class_<SetBackwardIterator>(PySet, REVERSED_ITERATOR_NAME)
+  py::class_<SetBackwardIterator>(PySet, REVERSE_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self != py::self);
 
@@ -660,7 +660,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            py::arg("value") = py::none())
       .def("size", &Vector::size);
 
-  py::class_<VectorBackwardIterator>(PyVector, REVERSED_ITERATOR_NAME)
+  py::class_<VectorBackwardIterator>(PyVector, REVERSE_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self != py::self)
       .def(py::self < py::self)
