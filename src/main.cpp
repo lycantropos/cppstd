@@ -97,7 +97,7 @@ struct ToEnd {
 };
 
 template <class RawCollection>
-struct ToReversedBegin {
+struct ToReverseBegin {
   typename RawCollection::const_reverse_iterator operator()(
       const RawCollection& collection) const {
     return std::crbegin(collection);
@@ -105,7 +105,7 @@ struct ToReversedBegin {
 };
 
 template <class RawCollection>
-struct ToReversedEnd {
+struct ToReverseEnd {
   typename RawCollection::const_reverse_iterator operator()(
       const RawCollection& collection) const {
     return std::crend(collection);
@@ -162,9 +162,9 @@ class Iterator {
 
  private:
   using Replenisher =
-      std::conditional_t<reversed, ToReversedBegin<RawCollection>,
+      std::conditional_t<reversed, ToReverseBegin<RawCollection>,
                          ToBegin<RawCollection>>;
-  using Exhauster = std::conditional_t<reversed, ToReversedEnd<RawCollection>,
+  using Exhauster = std::conditional_t<reversed, ToReverseEnd<RawCollection>,
                                        ToEnd<RawCollection>>;
 
   std::weak_ptr<RawCollection> _raw_collection_ptr;
