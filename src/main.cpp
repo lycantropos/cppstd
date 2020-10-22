@@ -17,18 +17,11 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
-#define MAP_BACKWARD_ITERATOR_NAME "MapBackwardIterator"
-#define MAP_FORWARD_ITERATOR_NAME "MapForwardIterator"
-#define MAP_KEYS_BACKWARD_ITERATOR_NAME "MapKeysBackwardIterator"
-#define MAP_KEYS_FORWARD_ITERATOR_NAME "MapKeysForwardIterator"
-#define MAP_VALUES_FORWARD_ITERATOR_NAME "MapValuesForwardIterator"
-#define MAP_NAME "Map"
-#define SET_BACKWARD_ITERATOR_NAME "SetBackwardIterator"
-#define SET_FORWARD_ITERATOR_NAME "SetForwardIterator"
-#define SET_NAME "Set"
-#define VECTOR_BACKWARD_ITERATOR_NAME "VectorBackwardIterator"
-#define VECTOR_FORWARD_ITERATOR_NAME "VectorForwardIterator"
-#define VECTOR_NAME "Vector"
+#define ITERATOR_NAME "iterator"
+#define MAP_NAME "map"
+#define REVERSED_ITERATOR_NAME "reversed_iterator"
+#define SET_NAME "set"
+#define VECTOR_NAME "vector"
 #ifndef VERSION_INFO
 #define VERSION_INFO "dev"
 #endif
@@ -118,7 +111,7 @@ struct ToReversedEnd {
   }
 };
 
-template <bool reversed, class RawCollection, class Transformer>
+template <class RawCollection, bool reversed>
 class Iterator {
  public:
   using Position =
@@ -132,23 +125,8 @@ class Iterator {
         position(position),
         _token(token){};
 
-  Iterator operator+(Index offset) const { return to_advanced(offset); }
-
-  Iterator operator-(Index offset) const { return to_advanced(-offset); }
-
-  Iterator& operator+=(Index offset) {
-    advance(offset);
-    return *this;
-  }
-
-  Iterator& operator-=(Index offset) {
-    advance(-offset);
-    return *this;
-  }
-
-  typename Transformer::return_t operator*() const {
-    static const Transformer transform;
-    return transform(*position);
+  const typename RawCollection::value_type& operator*() const {
+    return *position;
   }
 
   bool operator!=(const Iterator& other) const {
@@ -159,38 +137,34 @@ class Iterator {
     return to_position() == other.to_position();
   }
 
-  Iterator operator++() {
+  Position& to_position() {
     validate();
-    if (position == to_end()) throw py::stop_iteration();
-    auto current_position = position;
-    position = std::next(position);
-    return {_raw_collection_ptr, current_position, _token};
+    return position;
   }
 
-  Iterator& operator++(int) {
-    validate();
-    if (position == to_end()) throw py::stop_iteration();
-    position = std::next(position);
-    return *this;
-  }
-
-  typename Transformer::return_t next() {
-    static const Transformer transform;
-    validate();
-    if (position == to_end()) throw py::stop_iteration();
-    const auto current_position = position;
-    position = std::next(position);
-    return transform(*current_position);
-  }
-
-  Position to_position() const {
+  const Position& to_position() const {
     validate();
     return position;
   }
 
   bool has_same_collection_with(
-      const Iterator<reversed, RawCollection, Transformer>& other) const {
+      const Iterator<RawCollection, reversed>& other) const {
     return are_addresses_equal(to_raw_collection(), other.to_raw_collection());
+  }
+
+  Position to_begin() const {
+    static const Replenisher replenish;
+    return replenish(to_raw_collection());
+  }
+
+  Position to_end() const {
+    static const Exhauster exhaust;
+    return exhaust(to_raw_collection());
+  }
+
+  Iterator<RawCollection, reversed> with_position(Position position) const {
+    return Iterator<RawCollection, reversed>{_raw_collection_ptr, position,
+                                             _token};
   }
 
  private:
@@ -203,37 +177,6 @@ class Iterator {
   std::weak_ptr<RawCollection> _raw_collection_ptr;
   Position position;
   Token _token;
-
-  void advance(Index offset) { position = to_advanced_position(offset); }
-
-  Position to_begin() const {
-    static const Replenisher replenish;
-    return replenish(to_raw_collection());
-  }
-
-  Position to_end() const {
-    static const Exhauster exhaust;
-    return exhaust(to_raw_collection());
-  }
-
-  Iterator to_advanced(Index offset) const {
-    return {_raw_collection_ptr, to_advanced_position(offset), _token};
-  }
-
-  Position to_advanced_position(Index offset) const {
-    Index min_offset = -std::distance(to_begin(), position);
-    Index max_offset = std::distance(position, to_end());
-    if (offset < min_offset || offset > max_offset) {
-      throw py::value_error(to_raw_collection().empty()
-                                ? std::string("Sequence is empty.")
-                                : (std::string("Offset should be in range(") +
-                                   std::to_string(min_offset) + ", " +
-                                   std::to_string(max_offset + 1) +
-                                   "), but found " + std::to_string(offset) +
-                                   "."));
-    }
-    return std::next(position, offset);
-  }
 
   const RawCollection& to_raw_collection() const {
     validate();
@@ -248,48 +191,97 @@ class Iterator {
   }
 };
 
-template <class RawCollection, class Transformer>
-using BackwardIterator = Iterator<true, RawCollection, Transformer>;
-template <class RawCollection, class Transformer>
-using ForwardIterator = Iterator<false, RawCollection, Transformer>;
-
-template <class T>
-struct Identity {
-  using return_t = T&&;
-
-  return_t operator()(T&& value) const { return std::forward<T>(value); }
-};
-
-template <class RawCollection>
-using PlainBackwardIterator =
-    BackwardIterator<RawCollection,
-                     Identity<const typename RawCollection::value_type&>>;
-template <class RawCollection>
-using PlainForwardIterator =
-    ForwardIterator<RawCollection,
-                    Identity<const typename RawCollection::value_type&>>;
-
-template <class Tuple, std::size_t Index>
-struct CoordinateGetter {
-  using return_t = typename std::tuple_element<Index, Tuple>::type;
-
-  return_t operator()(const Tuple& value) const {
-    return std::get<Index>(value);
+template <class RawCollection, bool reversed>
+static typename Iterator<RawCollection, reversed>::Position
+to_advanced_position(const Iterator<RawCollection, reversed>& iterator,
+                     Index offset) {
+  const auto& position = iterator.to_position();
+  const auto begin = iterator.to_begin();
+  const auto end = iterator.to_end();
+  Index min_offset = -std::distance(begin, position);
+  Index max_offset = std::distance(position, end);
+  if (offset < min_offset || offset > max_offset) {
+    throw py::value_error(
+        begin == end ? std::string("Collection is empty.")
+                     : (std::string("Offset should be in range(") +
+                        std::to_string(min_offset) + ", " +
+                        std::to_string(max_offset + 1) + "), but found " +
+                        std::to_string(offset) + "."));
   }
-};
+  return position + offset;
+}
 
-using MapKeysBackwardIterator =
-    BackwardIterator<RawMap, CoordinateGetter<RawMapItem, 0>>;
-using MapKeysForwardIterator =
-    ForwardIterator<RawMap, CoordinateGetter<RawMapItem, 0>>;
-using MapValuesForwardIterator =
-    ForwardIterator<RawMap, CoordinateGetter<RawMapItem, 1>>;
-using MapBackwardIterator = PlainBackwardIterator<RawMap>;
-using MapForwardIterator = PlainForwardIterator<RawMap>;
-using SetBackwardIterator = PlainBackwardIterator<RawSet>;
-using SetForwardIterator = PlainForwardIterator<RawSet>;
-using VectorBackwardIterator = PlainBackwardIterator<RawVector>;
-using VectorForwardIterator = PlainForwardIterator<RawVector>;
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed> operator+(
+    const Iterator<RawCollection, reversed>& iterator, Index offset) {
+  return iterator.with_position(to_advanced_position(iterator, offset));
+}
+
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed> operator-(
+    const Iterator<RawCollection, reversed>& iterator, Index offset) {
+  return iterator + (-offset);
+}
+
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed>& operator+=(
+    Iterator<RawCollection, reversed>& iterator, Index offset) {
+  iterator.to_position() = to_advanced_position(iterator, offset);
+  return iterator;
+}
+
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed>& operator-=(
+    Iterator<RawCollection, reversed>& iterator, Index offset) {
+  return (iterator += (-offset));
+}
+
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed> operator++(
+    Iterator<RawCollection, reversed>& iterator) {
+  auto& position = iterator.to_position();
+  if (position == iterator.to_end()) throw py::stop_iteration();
+  return iterator.with_position(position++);
+}
+
+template <class RawCollection, bool reversed>
+Iterator<RawCollection, reversed>& operator++(
+    Iterator<RawCollection, reversed>& iterator, int) {
+  auto& position = iterator.to_position();
+  if (position == iterator.to_end()) throw py::stop_iteration();
+  ++position;
+  return iterator;
+}
+
+template <class RawCollection, bool reversed>
+static bool operator<(const Iterator<RawCollection, reversed>& self,
+                      const Iterator<RawCollection, reversed>& other) {
+  if (!self.has_same_collection_with(other))
+    throw py::value_error(
+        "Comparing iterators of different collections is prohibited.");
+  return self.to_position() < other.to_position();
+}
+
+template <class RawCollection, bool reversed>
+static bool operator<=(const Iterator<RawCollection, reversed>& self,
+                       const Iterator<RawCollection, reversed>& other) {
+  if (!self.has_same_collection_with(other))
+    throw py::value_error(
+        "Comparing iterators of different collections is prohibited.");
+  return self.to_position() <= other.to_position();
+}
+
+template <class RawCollection>
+using BackwardIterator = Iterator<RawCollection, true>;
+template <class RawCollection>
+using ForwardIterator = Iterator<RawCollection, false>;
+
+using MapBackwardIterator = BackwardIterator<RawMap>;
+using MapForwardIterator = ForwardIterator<RawMap>;
+using SetBackwardIterator = BackwardIterator<RawSet>;
+using SetForwardIterator = ForwardIterator<RawSet>;
+using VectorBackwardIterator = BackwardIterator<RawVector>;
+using VectorForwardIterator = ForwardIterator<RawVector>;
 
 template <class Iterable>
 IterableState iterable_to_state(const Iterable& self) {
@@ -338,20 +330,12 @@ class Map {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
-  MapKeysForwardIterator keys() const {
-    return {_raw, _raw->begin(), _tokenizer.create()};
-  }
-
   MapBackwardIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   MapBackwardIterator rend() const {
     return {_raw, _raw->rend(), _tokenizer.create()};
-  }
-
-  MapKeysBackwardIterator reversed_keys() const {
-    return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
   void set_item(Object key, Object value) {
@@ -361,10 +345,6 @@ class Map {
   }
 
   std::size_t size() const { return _raw->size(); }
-
-  MapValuesForwardIterator values() const {
-    return {_raw, _raw->begin(), _tokenizer.create()};
-  }
 
  private:
   std::shared_ptr<RawMap> _raw;
@@ -937,30 +917,6 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
   return stream << ")";
 }
 
-static bool operator<(const VectorBackwardIterator& self,
-                      const VectorBackwardIterator& other) {
-  return self.has_same_collection_with(other) &&
-         self.to_position() < other.to_position();
-}
-
-static bool operator<(const VectorForwardIterator& self,
-                      const VectorForwardIterator& other) {
-  return self.has_same_collection_with(other) &&
-         self.to_position() < other.to_position();
-}
-
-static bool operator<=(const VectorBackwardIterator& self,
-                       const VectorBackwardIterator& other) {
-  return self.has_same_collection_with(other) &&
-         self.to_position() <= other.to_position();
-}
-
-static bool operator<=(const VectorForwardIterator& self,
-                       const VectorForwardIterator& other) {
-  return self.has_same_collection_with(other) &&
-         self.to_position() <= other.to_position();
-}
-
 PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
   m.attr("__version__") = VERSION_INFO;
@@ -987,77 +943,22 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__bool__", &Map::operator bool)
       .def("__contains__", &Map::contains, py::arg("key"))
       .def("__delitem__", &Map::delete_item, py::arg("key"))
-      .def("__iter__", &Map::keys)
       .def("__len__", &Map::size)
       .def("__repr__", to_repr<Map>)
-      .def("__reversed__", &Map::reversed_keys)
       .def("__setitem__", &Map::set_item, py::arg("key"), py::arg("value"))
       .def("begin", &Map::begin)
       .def("clear", &Map::clear)
       .def("end", &Map::end)
-      .def("items", &Map::begin)
-      .def("keys", &Map::keys)
       .def("rbegin", &Map::rbegin)
-      .def("rend", &Map::rend)
-      .def("values", &Map::values);
+      .def("rend", &Map::rend);
 
-  py::class_<MapBackwardIterator>(m, MAP_BACKWARD_ITERATOR_NAME)
+  py::class_<MapBackwardIterator>(PyMap, REVERSED_ITERATOR_NAME)
       .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](MapBackwardIterator& self) -> MapBackwardIterator& {
-             return self;
-           })
-      .def("__next__", &MapBackwardIterator::next);
+      .def(py::self != py::self);
 
-  py::class_<MapForwardIterator>(m, MAP_FORWARD_ITERATOR_NAME)
+  py::class_<MapForwardIterator>(PyMap, ITERATOR_NAME)
       .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](MapForwardIterator& self) -> MapForwardIterator& { return self; })
-      .def("__next__", &MapForwardIterator::next);
-
-  py::class_<MapKeysBackwardIterator>(m, MAP_KEYS_BACKWARD_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](MapKeysBackwardIterator& self) -> MapKeysBackwardIterator& {
-             return self;
-           })
-      .def("__next__", &MapKeysBackwardIterator::next);
-
-  py::class_<MapKeysForwardIterator>(m, MAP_KEYS_FORWARD_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](MapKeysForwardIterator& self) -> MapKeysForwardIterator& {
-             return self;
-           })
-      .def("__next__", &MapKeysForwardIterator::next);
-
-  py::class_<MapValuesForwardIterator>(m, MAP_VALUES_FORWARD_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](MapValuesForwardIterator& self) -> MapValuesForwardIterator& {
-             return self;
-           })
-      .def("__next__", &MapValuesForwardIterator::next);
+      .def(py::self != py::self);
 
   py::class_<Set> PySet(m, SET_NAME);
   PySet
@@ -1081,10 +982,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__bool__", &Set::operator bool)
       .def("__contains__", &Set::contains)
-      .def("__iter__", &Set::begin)
       .def("__len__", &Set::size)
       .def("__repr__", to_repr<Set>)
-      .def("__reversed__", &Set::rbegin)
       .def("add", &Set::add)
       .def("begin", &Set::begin)
       .def("clear", &Set::clear)
@@ -1098,30 +997,13 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("remove", &Set::remove, py::arg("value"))
       .def("rend", &Set::rend);
 
-  py::module collections_abc = py::module::import("collections.abc");
-  collections_abc.attr("MutableSet").attr("register")(PySet);
-
-  py::class_<SetBackwardIterator>(m, SET_BACKWARD_ITERATOR_NAME)
+  py::class_<SetBackwardIterator>(PySet, REVERSED_ITERATOR_NAME)
       .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](SetBackwardIterator& self) -> SetBackwardIterator& {
-             return self;
-           })
-      .def("__next__", &SetBackwardIterator::next);
+      .def(py::self != py::self);
 
-  py::class_<SetForwardIterator>(m, SET_FORWARD_ITERATOR_NAME)
+  py::class_<SetForwardIterator>(PySet, ITERATOR_NAME)
       .def(py::self == py::self)
-      .def(py::self + Index{})
-      .def(py::self - Index{})
-      .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](SetForwardIterator& self) -> SetForwardIterator& { return self; })
-      .def("__next__", &SetForwardIterator::next);
+      .def(py::self != py::self);
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
   PyVector
@@ -1150,10 +1032,8 @@ PYBIND11_MODULE(MODULE_NAME, m) {
             return self;
           },
           py::arg("values"), py::is_operator{})
-      .def("__iter__", &Vector::begin)
       .def("__len__", &Vector::size)
       .def("__repr__", to_repr<Vector>)
-      .def("__reversed__", &Vector::rbegin)
       .def("__setitem__", &Vector::set_item, py::arg("index"), py::arg("value"))
       .def("__setitem__", &Vector::set_items, py::arg("slice"),
            py::arg("values"))
@@ -1177,33 +1057,23 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            py::arg("value") = py::none())
       .def("reverse", &Vector::reverse);
 
-  collections_abc.attr("MutableSequence").attr("register")(PyVector);
-
-  py::class_<VectorBackwardIterator>(m, VECTOR_BACKWARD_ITERATOR_NAME)
+  py::class_<VectorBackwardIterator>(PyVector, REVERSED_ITERATOR_NAME)
       .def(py::self == py::self)
+      .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](VectorBackwardIterator& self) -> VectorBackwardIterator& {
-             return self;
-           })
-      .def("__next__", &VectorBackwardIterator::next);
+      .def(py::self -= Index{});
 
-  py::class_<VectorForwardIterator>(m, VECTOR_FORWARD_ITERATOR_NAME)
+  py::class_<VectorForwardIterator>(PyVector, ITERATOR_NAME)
       .def(py::self == py::self)
+      .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
-      .def(py::self -= Index{})
-      .def("__iter__",
-           [](VectorForwardIterator& self) -> VectorForwardIterator& {
-             return self;
-           })
-      .def("__next__", &VectorForwardIterator::next);
+      .def(py::self -= Index{});
 }
