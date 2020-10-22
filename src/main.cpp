@@ -18,9 +18,11 @@ namespace py = pybind11;
 #define MODULE_NAME _cppstd
 #define C_STR_HELPER(a) #a
 #define C_STR(a) C_STR_HELPER(a)
+#define CONST_ITERATOR_NAME "const_iterator"
+#define CONST_REVERSE_ITERATOR_NAME "const_reverse_iterator"
 #define ITERATOR_NAME "iterator"
-#define MAP_NAME "map"
 #define REVERSE_ITERATOR_NAME "reverse_iterator"
+#define MAP_NAME "map"
 #define SET_NAME "set"
 #define VECTOR_NAME "vector"
 #ifndef VERSION_INFO
@@ -112,23 +114,34 @@ struct ToReverseEnd {
   }
 };
 
-template <class RawCollection, bool reversed>
+template <class RawCollection, bool constant, bool reversed>
 class BaseIterator {
  public:
-  using Position =
+  using ConstPosition =
       std::conditional_t<reversed,
                          typename RawCollection::const_reverse_iterator,
                          typename RawCollection::const_iterator>;
+  using Position = std::conditional_t<
+      constant, ConstPosition,
+      std::conditional_t<reversed, typename RawCollection::reverse_iterator,
+                         typename RawCollection::iterator>>;
+  using ConstValueRef =
+      const typename std::iterator_traits<Position>::value_type&;
+  using ValueRef =
+      std::conditional_t<constant, ConstValueRef,
+                         typename std::iterator_traits<Position>::value_type&>;
 
-  BaseIterator(std::weak_ptr<RawCollection> raw_collection_ptr, Position position,
-           const Token& token)
+  BaseIterator(std::weak_ptr<RawCollection> raw_collection_ptr,
+               Position position, const Token& token)
       : _raw_collection_ptr(raw_collection_ptr),
         position(position),
         _token(token){};
 
-  typename std::iterator_traits<Position>::value_type operator*() const {
+  const typename std::iterator_traits<Position>::value_type& operator*() const {
     return *position;
   }
+
+  ValueRef operator*() { return *position; }
 
   Position& to_position() {
     validate();
@@ -141,23 +154,24 @@ class BaseIterator {
   }
 
   bool has_same_collection_with(
-      const BaseIterator<RawCollection, reversed>& other) const {
+      const BaseIterator<RawCollection, constant, reversed>& other) const {
     return are_addresses_equal(to_raw_collection(), other.to_raw_collection());
   }
 
-  Position to_begin() const {
+  ConstPosition to_begin() const {
     static const Replenisher replenish;
     return replenish(to_raw_collection());
   }
 
-  Position to_end() const {
+  ConstPosition to_end() const {
     static const Exhauster exhaust;
     return exhaust(to_raw_collection());
   }
 
-  BaseIterator<RawCollection, reversed> with_position(Position position) const {
-    return BaseIterator<RawCollection, reversed>{_raw_collection_ptr, position,
-                                             _token};
+  BaseIterator<RawCollection, constant, reversed> with_position(
+      Position position) const {
+    return BaseIterator<RawCollection, constant, reversed>{_raw_collection_ptr,
+                                                           position, _token};
   }
 
  private:
@@ -173,7 +187,7 @@ class BaseIterator {
 
   const RawCollection& to_raw_collection() const {
     validate();
-    if (const auto* ptr = _raw_collection_ptr.lock().get())
+    if (auto* ptr = _raw_collection_ptr.lock().get())
       return *ptr;
     else
       throw py::value_error("Iterator is invalidated.");
@@ -184,45 +198,50 @@ class BaseIterator {
   }
 };
 
-template <class RawCollection, bool reversed>
-bool operator!=(const BaseIterator<RawCollection, reversed>& left,
-                const BaseIterator<RawCollection, reversed>& right) {
+template <class RawCollection, bool constant, bool reversed>
+bool operator!=(const BaseIterator<RawCollection, constant, reversed>& left,
+                const BaseIterator<RawCollection, constant, reversed>& right) {
   return left.to_position() != right.to_position();
 }
 
-template <class RawCollection, bool reversed>
-bool operator==(const BaseIterator<RawCollection, reversed>& left,
-                const BaseIterator<RawCollection, reversed>& right) {
+template <class RawCollection, bool constant, bool reversed>
+bool operator==(const BaseIterator<RawCollection, constant, reversed>& left,
+                const BaseIterator<RawCollection, constant, reversed>& right) {
   return left.to_position() == right.to_position();
 }
 
-template <class RawCollection, bool reversed>
-static bool operator<=(const BaseIterator<RawCollection, reversed>& self,
-                       const BaseIterator<RawCollection, reversed>& other) {
+template <class RawCollection, bool constant, bool reversed>
+static bool operator<=(
+    const BaseIterator<RawCollection, constant, reversed>& self,
+    const BaseIterator<RawCollection, constant, reversed>& other) {
   if (!self.has_same_collection_with(other))
     throw py::value_error(
         "Comparing iterators of different collections is prohibited.");
   return self.to_position() <= other.to_position();
 }
 
-template <class RawCollection, bool reversed>
-static bool operator<(const BaseIterator<RawCollection, reversed>& self,
-                      const BaseIterator<RawCollection, reversed>& other) {
+template <class RawCollection, bool constant, bool reversed>
+static bool operator<(
+    const BaseIterator<RawCollection, constant, reversed>& self,
+    const BaseIterator<RawCollection, constant, reversed>& other) {
   if (!self.has_same_collection_with(other))
     throw py::value_error(
         "Comparing iterators of different collections is prohibited.");
   return self.to_position() < other.to_position();
 }
 
-template <class RawCollection, bool reversed>
-static typename BaseIterator<RawCollection, reversed>::Position
-to_advanced_position(const BaseIterator<RawCollection, reversed>& iterator,
-                     Index offset) {
+template <class RawCollection, bool constant, bool reversed>
+static typename BaseIterator<RawCollection, constant, reversed>::Position
+to_advanced_position(
+    const BaseIterator<RawCollection, constant, reversed>& iterator,
+    Index offset) {
   const auto& position = iterator.to_position();
+  const typename BaseIterator<RawCollection, constant, reversed>::ConstPosition&
+      const_position = position;
   const auto begin = iterator.to_begin();
   const auto end = iterator.to_end();
-  Index min_offset = -std::distance(begin, position);
-  Index max_offset = std::distance(position, end);
+  Index min_offset = -std::distance(begin, const_position);
+  Index max_offset = std::distance(const_position, end);
   if (offset < min_offset || offset > max_offset) {
     throw py::value_error(
         begin == end ? std::string("Collection is empty.")
@@ -234,64 +253,83 @@ to_advanced_position(const BaseIterator<RawCollection, reversed>& iterator,
   return position + offset;
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed> operator+(
-    const BaseIterator<RawCollection, reversed>& iterator, Index offset) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator+(
+    const BaseIterator<RawCollection, constant, reversed>& iterator,
+    Index offset) {
   return iterator.with_position(to_advanced_position(iterator, offset));
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed> operator-(
-    const BaseIterator<RawCollection, reversed>& iterator, Index offset) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator-(
+    const BaseIterator<RawCollection, constant, reversed>& iterator,
+    Index offset) {
   return iterator + (-offset);
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed>& operator+=(
-    BaseIterator<RawCollection, reversed>& iterator, Index offset) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed>& operator+=(
+    BaseIterator<RawCollection, constant, reversed>& iterator, Index offset) {
   iterator.to_position() = to_advanced_position(iterator, offset);
   return iterator;
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed>& operator-=(
-    BaseIterator<RawCollection, reversed>& iterator, Index offset) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed>& operator-=(
+    BaseIterator<RawCollection, constant, reversed>& iterator, Index offset) {
   return (iterator += (-offset));
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed> operator++(
-    BaseIterator<RawCollection, reversed>& iterator) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator++(
+    BaseIterator<RawCollection, constant, reversed>& iterator) {
   auto& position = iterator.to_position();
   if (position == iterator.to_end()) throw py::stop_iteration();
   return iterator.with_position(position++);
 }
 
-template <class RawCollection, bool reversed>
-BaseIterator<RawCollection, reversed>& operator++(
-    BaseIterator<RawCollection, reversed>& iterator, int) {
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed>& operator++(
+    BaseIterator<RawCollection, constant, reversed>& iterator, int) {
   auto& position = iterator.to_position();
   if (position == iterator.to_end()) throw py::stop_iteration();
   ++position;
   return iterator;
 }
 
-template <class RawCollection>
-using Iterator = BaseIterator<RawCollection, false>;
-template <class RawCollection>
-using ReverseIterator = BaseIterator<RawCollection, true>;
+template <class It>
+typename It::ConstValueRef get_iterator_value(const It& iterator) {
+  return *iterator;
+}
 
-using MapIterator = Iterator<RawMap>;
-using MapReverseIterator = ReverseIterator<RawMap>;
-using SetIterator = Iterator<RawSet>;
-using SetReverseIterator = ReverseIterator<RawSet>;
+template <class It>
+void set_iterator_value(It& iterator, typename It::ConstValueRef value) {
+  *iterator = value;
+}
+
+template <class RawCollection>
+using ConstIterator = BaseIterator<RawCollection, true, false>;
+template <class RawCollection>
+using ConstReverseIterator = BaseIterator<RawCollection, true, true>;
+template <class RawCollection>
+using Iterator = BaseIterator<RawCollection, false, false>;
+template <class RawCollection>
+using ReverseIterator = BaseIterator<RawCollection, false, true>;
+
+using MapConstIterator = ConstIterator<RawMap>;
+using MapConstReverseIterator = ConstReverseIterator<RawMap>;
+using SetConstIterator = ConstIterator<RawSet>;
+using SetConstReverseIterator = ConstReverseIterator<RawSet>;
 using VectorIterator = Iterator<RawVector>;
 using VectorReverseIterator = ReverseIterator<RawVector>;
+using VectorConstIterator = ConstIterator<RawVector>;
+using VectorConstReverseIterator = ConstReverseIterator<RawVector>;
 
 template <class Iterable>
 IterableState iterable_to_state(const Iterable& self) {
   IterableState result;
-  for (const auto& element : self) result.append(element);
+  for (auto position = self.cbegin(); position != self.cend(); ++position)
+    result.append(*position);
   return result;
 }
 
@@ -310,8 +348,16 @@ class Map {
     return {raw};
   }
 
-  MapIterator begin() const {
+  MapConstIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  MapConstIterator cbegin() const {
+    return {_raw, _raw->cbegin(), _tokenizer.create()};
+  }
+
+  MapConstIterator cend() const {
+    return {_raw, _raw->cend(), _tokenizer.create()};
   }
 
   void clear() {
@@ -319,17 +365,25 @@ class Map {
     return _raw->clear();
   }
 
+  MapConstReverseIterator crbegin() const {
+    return {_raw, _raw->crbegin(), _tokenizer.create()};
+  }
+
+  MapConstReverseIterator crend() const {
+    return {_raw, _raw->crend(), _tokenizer.create()};
+  }
+
   bool empty() const { return _raw->empty(); }
 
-  MapIterator end() const {
+  MapConstIterator end() const {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
-  MapReverseIterator rbegin() const {
+  MapConstReverseIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
-  MapReverseIterator rend() const {
+  MapConstReverseIterator rend() const {
     return {_raw, _raw->rend(), _tokenizer.create()};
   }
 
@@ -402,8 +456,16 @@ class Set {
     return {raw};
   }
 
-  SetIterator begin() const {
+  SetConstIterator begin() const {
     return {_raw, _raw->begin(), _tokenizer.create()};
+  }
+
+  SetConstIterator cbegin() const {
+    return {_raw, _raw->cbegin(), _tokenizer.create()};
+  }
+
+  SetConstIterator cend() const {
+    return {_raw, _raw->cend(), _tokenizer.create()};
   }
 
   void clear() {
@@ -411,15 +473,23 @@ class Set {
     return _raw->clear();
   }
 
-  SetIterator end() const {
+  SetConstReverseIterator crbegin() const {
+    return {_raw, _raw->crbegin(), _tokenizer.create()};
+  }
+
+  SetConstReverseIterator crend() const {
+    return {_raw, _raw->crend(), _tokenizer.create()};
+  }
+
+  SetConstIterator end() const {
     return {_raw, _raw->end(), _tokenizer.create()};
   }
 
-  SetReverseIterator rbegin() const {
+  SetConstReverseIterator rbegin() const {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
-  SetReverseIterator rend() const {
+  SetConstReverseIterator rend() const {
     return {_raw, _raw->rend(), _tokenizer.create()};
   }
 
@@ -470,8 +540,22 @@ class Vector {
     return *this->_raw <= *other._raw;
   }
 
-  VectorIterator begin() const {
-    return {_raw, _raw->begin(), _tokenizer.create()};
+  VectorIterator begin() { return {_raw, _raw->begin(), _tokenizer.create()}; }
+
+  VectorConstIterator cbegin() const {
+    return {_raw, _raw->cbegin(), _tokenizer.create()};
+  }
+
+  VectorConstIterator cend() const {
+    return {_raw, _raw->cend(), _tokenizer.create()};
+  }
+
+  VectorConstReverseIterator crbegin() const {
+    return {_raw, _raw->crbegin(), _tokenizer.create()};
+  }
+
+  VectorConstReverseIterator crend() const {
+    return {_raw, _raw->crend(), _tokenizer.create()};
   }
 
   void clear() {
@@ -481,9 +565,7 @@ class Vector {
 
   bool empty() const { return _raw->empty(); }
 
-  VectorIterator end() const {
-    return {_raw, _raw->end(), _tokenizer.create()};
-  }
+  VectorIterator end() { return {_raw, _raw->end(), _tokenizer.create()}; }
 
   Object get_item(Index index) const {
     Index size = _raw->size();
@@ -508,11 +590,11 @@ class Vector {
     _raw->push_back(value);
   }
 
-  VectorReverseIterator rbegin() const {
+  VectorReverseIterator rbegin() {
     return {_raw, _raw->rbegin(), _tokenizer.create()};
   }
 
-  VectorReverseIterator rend() const {
+  VectorReverseIterator rend() {
     return {_raw, _raw->rend(), _tokenizer.create()};
   }
 
@@ -587,20 +669,31 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", to_repr<Map>)
       .def("__setitem__", &Map::set_item, py::arg("key"), py::arg("value"))
       .def("begin", &Map::begin)
+      .def("cbegin", &Map::cbegin)
+      .def("cend", &Map::cend)
       .def("clear", &Map::clear)
+      .def("crbegin", &Map::crbegin)
+      .def("crend", &Map::crend)
       .def("empty", &Map::empty)
       .def("end", &Map::end)
       .def("rbegin", &Map::rbegin)
       .def("rend", &Map::rend)
       .def("size", &Map::size);
 
-  py::class_<MapReverseIterator>(PyMap, REVERSE_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self != py::self);
+  py::class_<MapConstIterator> PyMapConstIterator(PyMap, CONST_ITERATOR_NAME);
+  PyMapConstIterator.def(py::self == py::self)
+      .def(py::self != py::self)
+      .def_property_readonly("value", &get_iterator_value<MapConstIterator>);
 
-  py::class_<MapIterator>(PyMap, ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self != py::self);
+  py::class_<MapConstReverseIterator> PyMapConstReverseIterator(
+      PyMap, CONST_REVERSE_ITERATOR_NAME);
+  PyMapConstReverseIterator.def(py::self == py::self)
+      .def(py::self != py::self)
+      .def_property_readonly("value",
+                             &get_iterator_value<MapConstReverseIterator>);
+
+  PyMap.attr(ITERATOR_NAME) = PyMapConstIterator;
+  PyMap.attr(REVERSE_ITERATOR_NAME) = PyMapConstReverseIterator;
 
   py::class_<Set> PySet(m, SET_NAME);
   PySet
@@ -616,20 +709,31 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
       .def("__repr__", to_repr<Set>)
       .def("begin", &Set::begin)
+      .def("cbegin", &Set::cbegin)
+      .def("cend", &Set::cend)
       .def("clear", &Set::clear)
+      .def("crbegin", &Set::crbegin)
+      .def("crend", &Set::crend)
       .def("empty", &Set::empty)
       .def("end", &Set::end)
       .def("rbegin", &Set::rbegin)
       .def("rend", &Set::rend)
       .def("size", &Set::size);
 
-  py::class_<SetReverseIterator>(PySet, REVERSE_ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self != py::self);
+  py::class_<SetConstIterator> PySetConstIterator(PySet, CONST_ITERATOR_NAME);
+  PySetConstIterator.def(py::self == py::self)
+      .def(py::self != py::self)
+      .def_property_readonly("value", &get_iterator_value<SetConstIterator>);
 
-  py::class_<SetIterator>(PySet, ITERATOR_NAME)
-      .def(py::self == py::self)
-      .def(py::self != py::self);
+  py::class_<SetConstReverseIterator> PySetConstReverseIterator(
+      PySet, CONST_REVERSE_ITERATOR_NAME);
+  PySetConstReverseIterator.def(py::self == py::self)
+      .def(py::self != py::self)
+      .def_property_readonly("value",
+                             &get_iterator_value<SetConstReverseIterator>);
+
+  PySet.attr(ITERATOR_NAME) = PySetConstIterator;
+  PySet.attr(REVERSE_ITERATOR_NAME) = PySetConstReverseIterator;
 
   py::class_<Vector> PyVector(m, VECTOR_NAME);
   PyVector
@@ -648,7 +752,11 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("__repr__", to_repr<Vector>)
       .def("__setitem__", &Vector::set_item, py::arg("index"), py::arg("value"))
       .def("begin", &Vector::begin)
+      .def("cbegin", &Vector::cbegin)
+      .def("cend", &Vector::cend)
       .def("clear", &Vector::clear)
+      .def("crbegin", &Vector::crbegin)
+      .def("crend", &Vector::crend)
       .def("empty", &Vector::empty)
       .def("end", &Vector::end)
       .def("pop_back", &Vector::pop_back)
@@ -660,7 +768,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
            py::arg("value") = py::none())
       .def("size", &Vector::size);
 
-  py::class_<VectorReverseIterator>(PyVector, REVERSE_ITERATOR_NAME)
+  py::class_<VectorConstIterator>(PyVector, CONST_ITERATOR_NAME)
       .def(py::self == py::self)
       .def(py::self != py::self)
       .def(py::self < py::self)
@@ -668,7 +776,20 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
-      .def(py::self -= Index{});
+      .def(py::self -= Index{})
+      .def_property_readonly("value", &get_iterator_value<VectorConstIterator>);
+
+  py::class_<VectorConstReverseIterator>(PyVector, CONST_REVERSE_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self != py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def_property_readonly("value",
+                             &get_iterator_value<VectorConstReverseIterator>);
 
   py::class_<VectorIterator>(PyVector, ITERATOR_NAME)
       .def(py::self == py::self)
@@ -678,5 +799,19 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
-      .def(py::self -= Index{});
+      .def(py::self -= Index{})
+      .def_property("value", &get_iterator_value<VectorIterator>,
+                    &set_iterator_value<VectorIterator>);
+
+  py::class_<VectorReverseIterator>(PyVector, REVERSE_ITERATOR_NAME)
+      .def(py::self == py::self)
+      .def(py::self != py::self)
+      .def(py::self < py::self)
+      .def(py::self <= py::self)
+      .def(py::self + Index{})
+      .def(py::self - Index{})
+      .def(py::self += Index{})
+      .def(py::self -= Index{})
+      .def_property("value", &get_iterator_value<VectorReverseIterator>,
+                    &set_iterator_value<VectorReverseIterator>);
 }
