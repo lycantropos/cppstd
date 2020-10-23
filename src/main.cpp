@@ -782,6 +782,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self <= py::self)
       .def(py::self == py::self)
       .def(py::pickle(&iterable_to_state<Set>, &Set::from_state))
+      .def("__iter__", &Set::to_python_iterator)
       .def("__repr__", to_repr<Set>)
       .def("begin", &Set::begin)
       .def("cbegin", &Set::cbegin)
