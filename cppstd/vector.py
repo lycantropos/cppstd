@@ -83,7 +83,7 @@ class _base_vector_iterator:
                                        max_offset=max_offset + 1,
                                        offset=offset)
                                if self._index != size
-                               else 'Advancing of placeholder iterators '
+                               else 'Advancing of stop iterators '
                                     'is undefined.')
         return self._index + offset
 
@@ -118,7 +118,7 @@ class vector(Generic[Value]):
         def value(self) -> Value:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return self._values[self._index]
 
@@ -147,7 +147,7 @@ class vector(Generic[Value]):
         def value(self) -> Value:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return self._values[self._index]
 
@@ -172,7 +172,7 @@ class vector(Generic[Value]):
         def value(self) -> Value:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return self._values[self._index]
 
@@ -180,7 +180,7 @@ class vector(Generic[Value]):
         def value(self, value: Value) -> None:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Setting value of placeholder iterators '
+                raise RuntimeError('Setting value of stop iterators '
                                    'is undefined.')
             self._values[self._index] = value
 
@@ -209,7 +209,7 @@ class vector(Generic[Value]):
         def value(self) -> Value:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return self._values[self._index]
 
@@ -217,7 +217,7 @@ class vector(Generic[Value]):
         def value(self, value: Value) -> None:
             self._validate()
             if self._index == len(self._values):
-                raise RuntimeError('Setting value of placeholder iterators '
+                raise RuntimeError('Setting value of stop iterators '
                                    'is undefined.')
             self._values[self._index] = value
 

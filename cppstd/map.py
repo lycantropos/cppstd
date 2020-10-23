@@ -41,7 +41,7 @@ class map(Generic[Key, Value]):
         def value(self) -> Item:
             node = self._to_validated_node()
             if node is red_black.NIL:
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return node.item
 
@@ -50,7 +50,7 @@ class map(Generic[Key, Value]):
         def value(self) -> Item:
             node = self._to_validated_node()
             if node is red_black.NIL:
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return node.item
 

@@ -43,7 +43,7 @@ class set(Generic[Value]):
         def value(self) -> Value:
             node = self._to_validated_node()
             if node is red_black.NIL:
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return node.value
 
@@ -52,7 +52,7 @@ class set(Generic[Value]):
         def value(self) -> Value:
             node = self._to_validated_node()
             if node is red_black.NIL:
-                raise RuntimeError('Getting value of placeholder iterators '
+                raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
             return node.value
 

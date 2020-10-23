@@ -286,7 +286,7 @@ static typename It::Position to_advanced_position(const It& iterator,
   if (offset < min_offset || offset > max_offset) {
     throw std::runtime_error(
         position == end
-            ? std::string("Advancing of placeholder iterators is undefined.")
+            ? std::string("Advancing of stop iterators is undefined.")
             : (std::string("Advancing of iterators out-of-bound is undefined: "
                            "offset should be in range(") +
                std::to_string(min_offset) + ", " +
@@ -329,7 +329,7 @@ BaseIterator<RawCollection, constant, reversed> operator++(
   auto& position = iterator.to_position();
   if (position == iterator.to_end())
     throw std::runtime_error(
-        "Post-incrementing of placeholder iterators is undefined.");
+        "Post-incrementing of stop iterators is undefined.");
   return iterator.with_position(position++);
 }
 
@@ -339,7 +339,7 @@ BaseIterator<RawCollection, constant, reversed>& operator++(
   auto& position = iterator.to_position();
   if (position == iterator.to_end())
     throw std::runtime_error(
-        "Pre-incrementing of placeholder iterators is undefined.");
+        "Pre-incrementing of stop iterators is undefined.");
   ++position;
   return iterator;
 }
@@ -347,16 +347,14 @@ BaseIterator<RawCollection, constant, reversed>& operator++(
 template <class It>
 typename It::ConstValueRef get_iterator_value(const It& iterator) {
   if (iterator.to_position() == iterator.to_end())
-    throw std::runtime_error(
-        "Getting value of placeholder iterators is undefined.");
+    throw std::runtime_error("Getting value of stop iterators is undefined.");
   return *iterator;
 }
 
 template <class It>
 void set_iterator_value(It& iterator, typename It::ConstValueRef value) {
   if (iterator.to_position() == iterator.to_end())
-    throw std::runtime_error(
-        "Setting value of placeholder iterators is undefined.");
+    throw std::runtime_error("Setting value of stop iterators is undefined.");
   *iterator = value;
 }
 
