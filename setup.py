@@ -15,25 +15,24 @@ from setuptools.command.build_ext import build_ext
 import cppstd
 
 
-def has_flag(compiler: CCompiler, name: str) -> bool:
+def has_flag(compiler: CCompiler, value: str) -> bool:
     """Detects whether a flag name is supported on the specified compiler."""
     with tempfile.NamedTemporaryFile('w',
                                      suffix='.cpp') as file:
         file.write('int main (int argc, char **argv) { return 0; }')
         try:
             compiler.compile([file.name],
-                             extra_postargs=[name])
+                             extra_postargs=[value])
         except CompileError:
             return False
     return True
 
 
-def cpp_flag(compiler: CCompiler,
-             *,
-             min_standard_version: int = 14) -> str:
+def max_standard_version_flag(compiler: CCompiler,
+                              *,
+                              min_standard_version: int = 14) -> str:
     """
-    Returns the -std=c++[11|...] compiler flag.
-    The newer version is preferred when available.
+    Returns maximum supported standard version compiler flag.
     """
     flags = ['-std=c++{}'.format(version)
              for version in range(min_standard_version,
@@ -64,7 +63,7 @@ class BuildExt(build_ext):
         compile_args = self.compile_args[compiler_type]
         link_args = self.link_args[compiler_type]
         if compiler_type == 'unix':
-            compile_args.append(cpp_flag(self.compiler))
+            compile_args.append(max_standard_version_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 compile_args.append('-fvisibility=hidden')
         define_macros = [('VERSION_INFO',
