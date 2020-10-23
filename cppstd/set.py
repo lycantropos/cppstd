@@ -1,14 +1,40 @@
 from typing import (Any,
-                    Generic)
+                    Generic,
+                    Iterator)
 
 from reprit.base import (generate_repr,
                          seekers)
 
 from .core import red_black
-from .core.tokenization import Tokenizer
-from .core.utils import (lexicographically_lower_than,
+from .core.tokenization import (SharedToken,
+                                Tokenizer)
+from .core.utils import (identity,
+                         lexicographically_lower_than,
                          lexicographically_lower_than_or_equal)
 from .hints import Value
+
+
+class set_iterator(Iterator[Value]):
+    __slots__ = '_node', '_tree', '_token'
+
+    def __init__(self,
+                 node: red_black.AnyNode,
+                 tree: red_black.Tree,
+                 token: SharedToken) -> None:
+        self._node = node
+        self._tree = tree
+        self._token = token
+
+    __iter__ = identity
+
+    def __next__(self) -> Value:
+        if self._token.expired:
+            raise RuntimeError('Iterator is invalidated.')
+        if self._node is red_black.NIL:
+            raise StopIteration
+        value = self._node.value
+        self._node = self._tree.successor(self._node)
+        return value
 
 
 class set(Generic[Value]):
@@ -46,6 +72,10 @@ class set(Generic[Value]):
         return (self._values == other._values
                 if isinstance(other, set)
                 else NotImplemented)
+
+    def __iter__(self) -> set_iterator[Value]:
+        return set_iterator(self._values.tree.min(), self._values.tree,
+                            self._tokenizer.create_shared())
 
     def __le__(self, other: 'set[Value]',
                *,
