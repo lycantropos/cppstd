@@ -39,60 +39,63 @@ class vector_iterator(Iterator[Value]):
             return value
 
 
+class _base_vector_iterator:
+    __slots__ = '_index', '_values', '_token'
+
+    def __init__(self,
+                 index: int,
+                 values: List[Value],
+                 token: WeakToken) -> None:
+        self._index = index
+        self._values = values
+        self._token = token
+
+    def __eq__(self, other: Any) -> bool:
+        return (self._to_validated_values() is other._to_validated_values()
+                and self._index == other._index
+                if isinstance(other, type(self))
+                else NotImplemented)
+
+    def __le__(self, other: Any) -> bool:
+        return (self._to_validated_values() is other._to_validated_values()
+                and self._index <= other._index
+                if isinstance(other, type(self))
+                else NotImplemented)
+
+    def __lt__(self, other: Any) -> bool:
+        return (self._to_validated_values() is other._to_validated_values()
+                and self._index < other._index
+                if isinstance(other, type(self))
+                else NotImplemented)
+
+    def _move_index(self, offset: int) -> int:
+        size = len(self._to_validated_values())
+        min_offset, max_offset = -self._index, size - self._index
+        if offset < min_offset or offset > max_offset:
+            raise RuntimeError('Advancing of iterators out-of-bound '
+                               'is undefined: '
+                               'offset should be '
+                               'in range({min_offset}, {max_offset}), '
+                               'but found {offset}.'
+                               .format(min_offset=min_offset,
+                                       max_offset=max_offset + 1,
+                                       offset=offset)
+                               if self._index != size
+                               else 'Advancing of placeholder iterators '
+                                    'is undefined.')
+        return self._index + offset
+
+    def _to_validated_values(self) -> List[Value]:
+        self._validate()
+        return self._values
+
+    def _validate(self) -> None:
+        if self._token.expired:
+            raise RuntimeError('Iterator is invalidated.')
+
+
 class vector(Generic[Value]):
-    class _base_iterator:
-        __slots__ = '_index', '_values', '_token'
-
-        def __init__(self, index: int, values: List[Value],
-                     token: WeakToken) -> None:
-            self._index = index
-            self._values = values
-            self._token = token
-
-        def __eq__(self, other: Any) -> bool:
-            return (self._to_validated_values() is other._to_validated_values()
-                    and self._index == other._index
-                    if isinstance(other, type(self))
-                    else NotImplemented)
-
-        def __le__(self, other: Any) -> bool:
-            return (self._to_validated_values() is other._to_validated_values()
-                    and self._index <= other._index
-                    if isinstance(other, type(self))
-                    else NotImplemented)
-
-        def __lt__(self, other: Any) -> bool:
-            return (self._to_validated_values() is other._to_validated_values()
-                    and self._index < other._index
-                    if isinstance(other, type(self))
-                    else NotImplemented)
-
-        def _move_index(self, offset: int) -> int:
-            size = len(self._to_validated_values())
-            min_offset, max_offset = -self._index, size - self._index
-            if offset < min_offset or offset > max_offset:
-                raise RuntimeError('Advancing of iterators out-of-bound '
-                                   'is undefined: '
-                                   'offset should be '
-                                   'in range({min_offset}, {max_offset}), '
-                                   'but found {offset}.'
-                                   .format(min_offset=min_offset,
-                                           max_offset=max_offset + 1,
-                                           offset=offset)
-                                   if self._index != size
-                                   else 'Advancing of placeholder iterators '
-                                        'is undefined.')
-            return self._index + offset
-
-        def _to_validated_values(self) -> List[Value]:
-            self._validate()
-            return self._values
-
-        def _validate(self) -> None:
-            if self._token.expired:
-                raise RuntimeError('Iterator is invalidated.')
-
-    class const_iterator(_base_iterator, Generic[Value]):
+    class const_iterator(_base_vector_iterator, Generic[Value]):
         def __add__(self, offset: int) -> 'vector.const_iterator[Value]':
             return vector.const_iterator(self._move_index(offset),
                                          self._values, self._token)
@@ -117,7 +120,7 @@ class vector(Generic[Value]):
                                    'is undefined.')
             return self._values[self._index]
 
-    class const_reverse_iterator(_base_iterator, Generic[Value]):
+    class const_reverse_iterator(_base_vector_iterator, Generic[Value]):
         def __add__(self,
                     offset: int) -> 'vector.const_reverse_iterator[Value]':
             return vector.const_reverse_iterator(self._move_index(offset),
@@ -146,7 +149,7 @@ class vector(Generic[Value]):
                                    'is undefined.')
             return self._values[self._index]
 
-    class iterator(_base_iterator, Generic[Value]):
+    class iterator(_base_vector_iterator, Generic[Value]):
         def __add__(self, offset: int) -> 'vector.iterator[Value]':
             return vector.iterator(self._move_index(offset), self._values,
                                    self._token)
@@ -179,7 +182,7 @@ class vector(Generic[Value]):
                                    'is undefined.')
             self._values[self._index] = value
 
-    class reverse_iterator(_base_iterator, Generic[Value]):
+    class reverse_iterator(_base_vector_iterator, Generic[Value]):
         def __add__(self,
                     offset: int) -> 'vector.reverse_iterator[Value]':
             return vector.reverse_iterator(self._move_index(offset),
