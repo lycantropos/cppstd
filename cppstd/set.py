@@ -89,16 +89,17 @@ class set(Generic[Value]):
                 else NotImplemented)
 
     def begin(self) -> iterator[Value]:
-        return self.iterator(self._values.tree.min(), self._values.tree,
+        return self.iterator(0, self._values.tree.min(), self._values.tree,
                              self._tokenizer.create_weak())
 
     def cbegin(self) -> const_iterator[Value]:
-        return self.const_iterator(self._values.tree.min(),
+        return self.const_iterator(0, self._values.tree.min(),
                                    self._values.tree,
                                    self._tokenizer.create_weak())
 
     def cend(self) -> const_iterator[Value]:
-        return self.const_iterator(red_black.NIL, self._values.tree,
+        return self.const_iterator(len(self._values), red_black.NIL,
+                                   self._values.tree,
                                    self._tokenizer.create_weak())
 
     def clear(self) -> None:
@@ -106,28 +107,31 @@ class set(Generic[Value]):
         self._values.clear()
 
     def crbegin(self) -> const_reverse_iterator[Value]:
-        return self.const_reverse_iterator(self._values.tree.max(),
+        return self.const_reverse_iterator(0, self._values.tree.max(),
                                            self._values.tree,
                                            self._tokenizer.create_weak())
 
     def crend(self) -> const_reverse_iterator[Value]:
-        return self.const_reverse_iterator(red_black.NIL, self._values.tree,
+        return self.const_reverse_iterator(len(self._values), red_black.NIL,
+                                           self._values.tree,
                                            self._tokenizer.create_weak())
 
     def empty(self) -> bool:
         return not self._values
 
     def end(self) -> iterator[Value]:
-        return self.iterator(red_black.NIL, self._values.tree,
+        return self.iterator(len(self._values), red_black.NIL,
+                             self._values.tree,
                              self._tokenizer.create_weak())
 
     def rbegin(self) -> reverse_iterator[Value]:
-        return self.reverse_iterator(self._values.tree.max(),
+        return self.reverse_iterator(0, self._values.tree.max(),
                                      self._values.tree,
                                      self._tokenizer.create_weak())
 
     def rend(self) -> reverse_iterator[Value]:
-        return self.reverse_iterator(red_black.NIL, self._values.tree,
+        return self.reverse_iterator(len(self._values), red_black.NIL,
+                                     self._values.tree,
                                      self._tokenizer.create_weak())
 
     def size(self) -> int:

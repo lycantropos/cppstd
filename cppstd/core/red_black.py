@@ -15,12 +15,14 @@ set_ = set_
 
 
 class TreeIterator:
-    __slots__ = '_node', '_tree', '_token'
+    __slots__ = '_index', '_node', '_tree', '_token'
 
     def __init__(self,
+                 index: int,
                  node: AnyNode,
                  tree: Tree,
                  token: WeakToken) -> None:
+        self._index = index
         self._node = node
         self._tree = tree
         self._token = token
@@ -31,13 +33,25 @@ class TreeIterator:
                 if isinstance(other, type(self))
                 else NotImplemented)
 
+    def dec(self) -> 'TreeIterator':
+        node = self._to_validated_node()
+        index = self._index
+        if not index:
+            raise RuntimeError('Post-decrementing of start iterators '
+                               'is undefined.')
+        self._node = self._tree.predecessor(node)
+        self._index -= 1
+        return type(self)(index, node, self._tree, self._token)
+
     def inc(self) -> 'TreeIterator':
         node = self._to_validated_node()
         if node is NIL:
             raise RuntimeError('Post-incrementing of stop iterators '
                                'is undefined.')
+        index = self._index
         self._node = self._tree.successor(node)
-        return type(self)(node, self._tree, self._token)
+        self._index += 1
+        return type(self)(index, node, self._tree, self._token)
 
     def _to_validated_node(self) -> AnyNode:
         self._validate()
