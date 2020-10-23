@@ -324,28 +324,8 @@ BaseIterator<RawCollection, constant, reversed>& operator-=(
 }
 
 template <class RawCollection, bool constant, bool reversed>
-BaseIterator<RawCollection, constant, reversed> operator++(
-    BaseIterator<RawCollection, constant, reversed>& iterator) {
-  auto& position = iterator.to_position();
-  if (position == iterator.to_end())
-    throw std::runtime_error(
-        "Post-incrementing of stop iterators is undefined.");
-  return iterator.with_position(position++);
-}
-
-template <class RawCollection, bool constant, bool reversed>
-BaseIterator<RawCollection, constant, reversed> operator--(
-    BaseIterator<RawCollection, constant, reversed>& iterator) {
-  auto& position = iterator.to_position();
-  if (position == iterator.to_begin())
-    throw std::runtime_error(
-        "Post-decrementing of start iterators is undefined.");
-  return iterator.with_position(position--);
-}
-
-template <class RawCollection, bool constant, bool reversed>
 BaseIterator<RawCollection, constant, reversed>& operator++(
-    BaseIterator<RawCollection, constant, reversed>& iterator, int) {
+    BaseIterator<RawCollection, constant, reversed>& iterator) {
   auto& position = iterator.to_position();
   if (position == iterator.to_end())
     throw std::runtime_error(
@@ -356,13 +336,33 @@ BaseIterator<RawCollection, constant, reversed>& operator++(
 
 template <class RawCollection, bool constant, bool reversed>
 BaseIterator<RawCollection, constant, reversed>& operator--(
-    BaseIterator<RawCollection, constant, reversed>& iterator, int) {
+    BaseIterator<RawCollection, constant, reversed>& iterator) {
   auto& position = iterator.to_position();
   if (position == iterator.to_begin())
     throw std::runtime_error(
         "Pre-decrementing of start iterators is undefined.");
   --position;
   return iterator;
+}
+
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator++(
+    BaseIterator<RawCollection, constant, reversed>& iterator, int) {
+  auto& position = iterator.to_position();
+  if (position == iterator.to_end())
+    throw std::runtime_error(
+        "Post-incrementing of stop iterators is undefined.");
+  return iterator.with_position(position++);
+}
+
+template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator--(
+    BaseIterator<RawCollection, constant, reversed>& iterator, int) {
+  auto& position = iterator.to_position();
+  if (position == iterator.to_begin())
+    throw std::runtime_error(
+        "Post-decrementing of start iterators is undefined.");
+  return iterator.with_position(position--);
 }
 
 template <class It>
