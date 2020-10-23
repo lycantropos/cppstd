@@ -1,12 +1,38 @@
-from typing import Generic
+from typing import (Generic,
+                    Iterator)
 
 from reprit.base import generate_repr
 
 from .core import red_black
-from .core.tokenization import Tokenizer
+from .core.tokenization import (SharedToken,
+                                Tokenizer)
+from .core.utils import identity
 from .hints import (Item,
                     Key,
                     Value)
+
+
+class map_iterator(Iterator[Value]):
+    __slots__ = '_node', '_tree', '_token'
+
+    def __init__(self,
+                 node: red_black.AnyNode,
+                 tree: red_black.Tree,
+                 token: SharedToken) -> None:
+        self._node = node
+        self._tree = tree
+        self._token = token
+
+    __iter__ = identity
+
+    def __next__(self) -> Item:
+        if self._token.expired:
+            raise RuntimeError('Iterator is invalidated.')
+        if self._node is red_black.NIL:
+            raise StopIteration
+        item = self._node.item
+        self._node = self._tree.successor(self._node)
+        return item
 
 
 class map(Generic[Key, Value]):
@@ -43,6 +69,10 @@ class map(Generic[Key, Value]):
         return (self._items == other._items
                 if isinstance(other, map)
                 else NotImplemented)
+
+    def __iter__(self) -> map_iterator[Value]:
+        return map_iterator(self._items.tree.min(), self._items.tree,
+                            self._tokenizer.create_shared())
 
     def __setitem__(self, key: Key, value: Value) -> None:
         node = self._items.tree.find(key)
