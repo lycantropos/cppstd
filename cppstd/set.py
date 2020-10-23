@@ -44,7 +44,7 @@ class set(Generic[Value]):
             if node is red_black.NIL:
                 raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
-            return node.value
+            return node.key
 
     class const_reverse_iterator(red_black.TreeIterator, Generic[Value]):
         @property
@@ -53,7 +53,7 @@ class set(Generic[Value]):
             if node is red_black.NIL:
                 raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
-            return node.value
+            return node.key
 
     iterator = const_iterator
     reverse_iterator = const_reverse_iterator
