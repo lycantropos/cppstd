@@ -31,11 +31,6 @@ class TreeIterator:
                 if isinstance(other, type(self))
                 else NotImplemented)
 
-    def _validate_comparison_with(self, other: 'TreeIterator') -> None:
-        if self._tree is not other._tree:
-            raise RuntimeError('Comparing iterators '
-                               'from different collections is undefined.')
-
     def _to_validated_node(self) -> AnyNode:
         self._validate()
         return self._node
@@ -43,3 +38,8 @@ class TreeIterator:
     def _validate(self) -> None:
         if self._token.expired:
             raise RuntimeError('Iterator is invalidated.')
+
+    def _validate_comparison_with(self, other: 'TreeIterator') -> None:
+        if self._tree is not other._tree:
+            raise RuntimeError('Comparing iterators '
+                               'from different collections is undefined.')
