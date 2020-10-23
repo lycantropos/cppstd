@@ -169,10 +169,11 @@ class vector(Generic[Value]):
         @property
         def value(self) -> Value:
             self._validate()
-            if self._index == len(self._values):
+            size = len(self._values)
+            if self._index == size:
                 raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
-            return self._values[self._index]
+            return self._values[size - 1 - self._index]
 
     class iterator(_base_vector_iterator, Generic[Value]):
         def __add__(self, offset: int) -> 'vector.iterator[Value]':
@@ -231,18 +232,20 @@ class vector(Generic[Value]):
         @property
         def value(self) -> Value:
             self._validate()
-            if self._index == len(self._values):
+            size = len(self._values)
+            if self._index == size:
                 raise RuntimeError('Getting value of stop iterators '
                                    'is undefined.')
-            return self._values[self._index]
+            return self._values[size - 1 - self._index]
 
         @value.setter
         def value(self, value: Value) -> None:
             self._validate()
-            if self._index == len(self._values):
+            size = len(self._values)
+            if self._index == size:
                 raise RuntimeError('Setting value of stop iterators '
                                    'is undefined.')
-            self._values[self._index] = value
+            self._values[size - 1 - self._index] = value
 
     __slots__ = '_values', '_tokenizer'
 
