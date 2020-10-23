@@ -92,7 +92,7 @@ def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
 
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
-    return bound.size() == ported.size()
+    return bound.size() == ported.size() and all(map(eq, bound, ported))
 
 
 def to_bound_ported_maps_pair(items: List[Item]) -> BoundPortedMapsPair:
