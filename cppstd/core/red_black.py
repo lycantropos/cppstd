@@ -50,14 +50,17 @@ class BaseTreeIterator(ABC):
         size = len(self._tree)
         min_offset, max_offset = -index, size - index
         if offset < min_offset or offset > max_offset:
-            raise ValueError('Offset should be '
-                             'in range({min_offset}, {max_offset}), '
-                             'but found {offset}.'
-                             .format(min_offset=min_offset,
-                                     max_offset=max_offset + 1,
-                                     offset=offset)
-                             if size
-                             else 'Container is empty.')
+            raise RuntimeError('Advancing of iterators out-of-bound '
+                               'is undefined: '
+                               'offset should be '
+                               'in range({min_offset}, {max_offset}), '
+                               'but found {offset}.'
+                               .format(min_offset=min_offset,
+                                       max_offset=max_offset + 1,
+                                       offset=offset)
+                               if self._index != size
+                               else 'Advancing of placeholder iterators '
+                                    'is undefined.')
         new_index = index + offset
         return new_index, self._index_to_node(new_index, size)
 
@@ -67,7 +70,7 @@ class BaseTreeIterator(ABC):
 
     def _validate(self) -> None:
         if self._token.expired:
-            raise ValueError('Iterator is invalidated.')
+            raise RuntimeError('Iterator is invalidated.')
 
 
 class TreeReverseIterator(BaseTreeIterator):
