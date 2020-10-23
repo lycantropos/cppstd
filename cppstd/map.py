@@ -19,8 +19,7 @@ class map(Generic[Key, Value]):
                                    'is undefined.')
             return node.item
 
-    class const_reverse_iterator(red_black.TreeReverseIterator,
-                                 Generic[Key, Value]):
+    class const_reverse_iterator(red_black.TreeIterator, Generic[Key, Value]):
         @property
         def value(self) -> Item:
             node = self._to_validated_node()
