@@ -153,9 +153,11 @@ class BaseIterator {
     return position;
   }
 
-  bool has_same_collection_with(
+  void validate_comparison_with(
       const BaseIterator<RawCollection, constant, reversed>& other) const {
-    return are_addresses_equal(to_raw_collection(), other.to_raw_collection());
+    if (!are_addresses_equal(to_raw_collection(), other.to_raw_collection()))
+      throw std::runtime_error(
+          "Comparing iterators from different collections is undefined.");
   }
 
   ConstPosition to_begin() const {
@@ -201,33 +203,31 @@ class BaseIterator {
 template <class RawCollection, bool constant, bool reversed>
 bool operator!=(const BaseIterator<RawCollection, constant, reversed>& left,
                 const BaseIterator<RawCollection, constant, reversed>& right) {
+  left.validate_comparison_with(right);
   return left.to_position() != right.to_position();
 }
 
 template <class RawCollection, bool constant, bool reversed>
 bool operator==(const BaseIterator<RawCollection, constant, reversed>& left,
                 const BaseIterator<RawCollection, constant, reversed>& right) {
+  left.validate_comparison_with(right);
   return left.to_position() == right.to_position();
 }
 
 template <class RawCollection, bool constant, bool reversed>
 static bool operator<=(
-    const BaseIterator<RawCollection, constant, reversed>& self,
-    const BaseIterator<RawCollection, constant, reversed>& other) {
-  if (!self.has_same_collection_with(other))
-    throw py::value_error(
-        "Comparing iterators of different collections is prohibited.");
-  return self.to_position() <= other.to_position();
+    const BaseIterator<RawCollection, constant, reversed>& left,
+    const BaseIterator<RawCollection, constant, reversed>& right) {
+  left.validate_comparison_with(right);
+  return left.to_position() <= right.to_position();
 }
 
 template <class RawCollection, bool constant, bool reversed>
 static bool operator<(
-    const BaseIterator<RawCollection, constant, reversed>& self,
-    const BaseIterator<RawCollection, constant, reversed>& other) {
-  if (!self.has_same_collection_with(other))
-    throw py::value_error(
-        "Comparing iterators of different collections is prohibited.");
-  return self.to_position() < other.to_position();
+    const BaseIterator<RawCollection, constant, reversed>& left,
+    const BaseIterator<RawCollection, constant, reversed>& right) {
+  left.validate_comparison_with(right);
+  return left.to_position() < right.to_position();
 }
 
 template <class RawCollection, bool constant, bool reversed>
