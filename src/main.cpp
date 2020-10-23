@@ -170,8 +170,7 @@ class BaseIterator {
 
   BaseIterator<RawCollection, constant, reversed> with_position(
       Position position) const {
-    return BaseIterator<RawCollection, constant, reversed>{_raw_collection_ptr,
-                                                           position, _token};
+    return {_raw_collection_ptr, position, _token};
   }
 
  private:
