@@ -299,11 +299,17 @@ BaseIterator<RawCollection, constant, reversed>& operator++(
 
 template <class It>
 typename It::ConstValueRef get_iterator_value(const It& iterator) {
+  if (iterator.to_position() == iterator.to_end())
+    throw std::runtime_error(
+        "Reading value of placeholder iterators is undefined.");
   return *iterator;
 }
 
 template <class It>
 void set_iterator_value(It& iterator, typename It::ConstValueRef value) {
+  if (iterator.to_position() == iterator.to_end())
+    throw std::runtime_error(
+        "Setting value of placeholder iterators is undefined.");
   *iterator = value;
 }
 
