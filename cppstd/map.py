@@ -36,7 +36,7 @@ class map(Generic[Key, Value]):
 
     def begin(self) -> iterator[Key, Value]:
         return self.iterator(0, self._items.tree.min(), self._items.tree,
-                             self._tokenizer.create())
+                             self._tokenizer.create_weak())
 
     def clear(self) -> None:
         self._tokenizer.reset()

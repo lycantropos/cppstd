@@ -10,7 +10,7 @@ from dendroid.red_black import (NIL,
                                 map_,
                                 set_)
 
-from .tokenization import Token
+from .tokenization import WeakToken
 
 AnyNode = Union[NIL, Node]
 Tree = Tree
@@ -29,7 +29,7 @@ class BaseTreeIterator(ABC):
                  index: int,
                  node: AnyNode,
                  tree: Tree[Node, Node],
-                 token: Token) -> None:
+                 token: WeakToken) -> None:
         self._index = index
         self._node = node
         self._tree = tree

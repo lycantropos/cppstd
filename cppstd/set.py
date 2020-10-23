@@ -47,7 +47,7 @@ class set(Generic[Value]):
 
     def begin(self) -> iterator[Value]:
         return self.iterator(0, self._values.tree.min(),
-                             self._values.tree, self._tokenizer.create())
+                             self._values.tree, self._tokenizer.create_weak())
 
     def clear(self) -> None:
         self._tokenizer.reset()
@@ -58,17 +58,17 @@ class set(Generic[Value]):
 
     def end(self) -> iterator[Value]:
         return self.iterator(len(self._values), red_black.NIL,
-                             self._values.tree, self._tokenizer.create())
+                             self._values.tree, self._tokenizer.create_weak())
 
     def rbegin(self) -> reverse_iterator[Value]:
         return self.reverse_iterator(0, self._values.tree.max(),
                                      self._values.tree,
-                                     self._tokenizer.create())
+                                     self._tokenizer.create_weak())
 
     def rend(self) -> reverse_iterator[Value]:
         return self.reverse_iterator(len(self._values), red_black.NIL,
                                      self._values.tree,
-                                     self._tokenizer.create())
+                                     self._tokenizer.create_weak())
 
     def size(self) -> int:
         return len(self._values)

@@ -1,7 +1,14 @@
 from functools import partial
 from itertools import zip_longest
 from typing import (Any,
-                    Iterable)
+                    Iterable,
+                    TypeVar)
+
+Domain = TypeVar('Domain')
+
+
+def identity(value: Domain) -> Domain:
+    return value
 
 
 def lexicographically_compare(left: Iterable[Any],
