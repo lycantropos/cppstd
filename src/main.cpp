@@ -230,14 +230,11 @@ static bool operator<(
   return left.to_position() < right.to_position();
 }
 
-template <class RawCollection, bool constant, bool reversed>
-static typename BaseIterator<RawCollection, constant, reversed>::Position
-to_advanced_position(
-    const BaseIterator<RawCollection, constant, reversed>& iterator,
-    Index offset) {
+template <class It>
+static typename It::Position to_advanced_position(const It& iterator,
+                                                  Index offset) {
   const auto& position = iterator.to_position();
-  const typename BaseIterator<RawCollection, constant, reversed>::ConstPosition&
-      const_position = position;
+  const typename It::ConstPosition& const_position = position;
   const auto begin = iterator.to_begin();
   const auto end = iterator.to_end();
   Index min_offset = -std::distance(begin, const_position);
