@@ -77,9 +77,7 @@ class set(Generic[Value]):
         return set_iterator(self._values.tree.min(), self._values.tree,
                             self._tokenizer.create_shared())
 
-    def __le__(self, other: 'set[Value]',
-               *,
-               _sentinel: Any = object()) -> bool:
+    def __le__(self, other: 'set[Value]') -> bool:
         return (lexicographically_lower_than_or_equal(self._values,
                                                       other._values)
                 if isinstance(other, set)
