@@ -31,6 +31,14 @@ class TreeIterator:
                 if isinstance(other, type(self))
                 else NotImplemented)
 
+    def inc(self) -> 'TreeIterator':
+        node = self._to_validated_node()
+        if node is NIL:
+            raise RuntimeError('Post-incrementing of stop iterators '
+                               'is undefined.')
+        self._node = self._tree.successor(node)
+        return type(self)(node, self._tree, self._token)
+
     def _to_validated_node(self) -> AnyNode:
         self._validate()
         return self._node
