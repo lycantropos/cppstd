@@ -134,31 +134,12 @@ class BaseIterator {
   BaseIterator(std::weak_ptr<RawCollection> raw_collection_ptr,
                Position position, const Token& token)
       : _raw_collection_ptr(raw_collection_ptr),
-        position(position),
+        _position(position),
         _token(token){};
 
-  const typename std::iterator_traits<Position>::value_type& operator*() const {
-    return *position;
-  }
+  ConstValueRef operator*() const { return *_position; }
 
-  ValueRef operator*() { return *position; }
-
-  Position& to_position() {
-    validate();
-    return position;
-  }
-
-  const Position& to_position() const {
-    validate();
-    return position;
-  }
-
-  void validate_comparison_with(
-      const BaseIterator<RawCollection, constant, reversed>& other) const {
-    if (!are_addresses_equal(to_raw_collection(), other.to_raw_collection()))
-      throw std::runtime_error(
-          "Comparing iterators from different collections is undefined.");
-  }
+  ValueRef operator*() { return *_position; }
 
   ConstPosition to_begin() const {
     static const Replenisher replenish;
@@ -168,6 +149,23 @@ class BaseIterator {
   ConstPosition to_end() const {
     static const Exhauster exhaust;
     return exhaust(to_raw_collection());
+  }
+
+  Position& to_position() {
+    validate();
+    return _position;
+  }
+
+  const Position& to_position() const {
+    validate();
+    return _position;
+  }
+
+  void validate_comparison_with(
+      const BaseIterator<RawCollection, constant, reversed>& other) const {
+    if (!are_addresses_equal(to_raw_collection(), other.to_raw_collection()))
+      throw std::runtime_error(
+          "Comparing iterators from different collections is undefined.");
   }
 
   BaseIterator<RawCollection, constant, reversed> with_position(
@@ -184,12 +182,12 @@ class BaseIterator {
                                        ToEnd<RawCollection>>;
 
   std::weak_ptr<RawCollection> _raw_collection_ptr;
-  Position position;
+  Position _position;
   Token _token;
 
   const RawCollection& to_raw_collection() const {
     validate();
-    if (auto* ptr = _raw_collection_ptr.lock().get())
+    if (const auto* ptr = _raw_collection_ptr.lock().get())
       return *ptr;
     else
       throw py::value_error("Iterator is invalidated.");
