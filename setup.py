@@ -15,36 +15,6 @@ from setuptools.command.build_ext import build_ext
 import cppstd
 
 
-def has_flag(compiler: CCompiler, value: str) -> bool:
-    """Detects whether a flag name is supported on the specified compiler."""
-    with tempfile.NamedTemporaryFile('w',
-                                     suffix='.cpp') as file:
-        file.write('int main (int argc, char **argv) { return 0; }')
-        try:
-            compiler.compile([file.name],
-                             extra_postargs=[value])
-        except CompileError:
-            return False
-    return True
-
-
-def max_standard_version_flag(compiler: CCompiler,
-                              *,
-                              min_standard_version: int = 14) -> str:
-    """
-    Returns maximum supported standard version compiler flag.
-    """
-    flags = ['-std=c++{}'.format(version)
-             for version in range(min_standard_version,
-                                  (date.today().year % 100) + 1, 3)]
-    for flag in reversed(flags):
-        if has_flag(compiler, flag):
-            return flag
-    raise RuntimeError('Unsupported compiler: '
-                       'at least C++{} support is needed.'
-                       .format(min_standard_version))
-
-
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     compile_args = defaultdict(list,
@@ -74,6 +44,36 @@ class BuildExt(build_ext):
             extension.extra_link_args = link_args
             extension.define_macros = define_macros
         super().build_extensions()
+
+
+def has_flag(compiler: CCompiler, value: str) -> bool:
+    """Detects whether a flag name is supported on the specified compiler."""
+    with tempfile.NamedTemporaryFile('w',
+                                     suffix='.cpp') as file:
+        file.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([file.name],
+                             extra_postargs=[value])
+        except CompileError:
+            return False
+    return True
+
+
+def max_standard_version_flag(compiler: CCompiler,
+                              *,
+                              min_standard_version: int = 14) -> str:
+    """
+    Returns maximum supported standard version compiler flag.
+    """
+    flags = ['-std=c++{}'.format(version)
+             for version in range(min_standard_version,
+                                  (date.today().year % 100) + 1, 3)]
+    for flag in reversed(flags):
+        if has_flag(compiler, flag):
+            return flag
+    raise RuntimeError('Unsupported compiler: '
+                       'at least C++{} support is needed.'
+                       .format(min_standard_version))
 
 
 project_base_url = 'https://github.com/lycantropos/cppstd/'
