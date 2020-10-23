@@ -12,11 +12,27 @@ from .hints import Value
 
 
 class set(Generic[Value]):
-    class iterator(red_black.TreeIterator, Generic[Value]):
-        pass
+    class const_iterator(red_black.TreeIterator, Generic[Value]):
+        @property
+        def value(self) -> Value:
+            node = self._to_validated_node()
+            if node is red_black.NIL:
+                raise RuntimeError('Getting value of placeholder iterators '
+                                   'is undefined.')
+            return node.value
 
-    class reverse_iterator(red_black.TreeReverseIterator, Generic[Value]):
-        pass
+    class const_reverse_iterator(red_black.TreeReverseIterator,
+                                 Generic[Value]):
+        @property
+        def value(self) -> Value:
+            node = self._to_validated_node()
+            if node is red_black.NIL:
+                raise RuntimeError('Getting value of placeholder iterators '
+                                   'is undefined.')
+            return node.value
+
+    iterator = const_iterator
+    reverse_iterator = const_reverse_iterator
 
     __slots__ = '_values', '_tokenizer'
 
@@ -46,12 +62,32 @@ class set(Generic[Value]):
                 else NotImplemented)
 
     def begin(self) -> iterator[Value]:
-        return self.iterator(0, self._values.tree.min(),
-                             self._values.tree, self._tokenizer.create_weak())
+        return self.iterator(0, self._values.tree.min(), self._values.tree,
+                             self._tokenizer.create_weak())
+
+    def cbegin(self) -> const_iterator[Value]:
+        return self.const_iterator(0, self._values.tree.min(),
+                                   self._values.tree,
+                                   self._tokenizer.create_weak())
+
+    def cend(self) -> const_iterator[Value]:
+        return self.const_iterator(len(self._values), red_black.NIL,
+                                   self._values.tree,
+                                   self._tokenizer.create_weak())
 
     def clear(self) -> None:
         self._tokenizer.reset()
         self._values.clear()
+
+    def crbegin(self) -> const_reverse_iterator[Value]:
+        return self.const_reverse_iterator(0, self._values.tree.max(),
+                                           self._values.tree,
+                                           self._tokenizer.create_weak())
+
+    def crend(self) -> const_reverse_iterator[Value]:
+        return self.const_reverse_iterator(len(self._values), red_black.NIL,
+                                           self._values.tree,
+                                           self._tokenizer.create_weak())
 
     def empty(self) -> bool:
         return not self._values
