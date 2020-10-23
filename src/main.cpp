@@ -348,7 +348,7 @@ template <class It>
 typename It::ConstValueRef get_iterator_value(const It& iterator) {
   if (iterator.to_position() == iterator.to_end())
     throw std::runtime_error(
-        "Reading value of placeholder iterators is undefined.");
+        "Getting value of placeholder iterators is undefined.");
   return *iterator;
 }
 
