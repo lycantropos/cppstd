@@ -53,16 +53,15 @@ class map(Generic[Key, Value]):
             node.value = value
 
     def begin(self) -> iterator[Key, Value]:
-        return self.iterator(0, self._items.tree.min(), self._items.tree,
+        return self.iterator(self._items.tree.min(), self._items.tree,
                              self._tokenizer.create_weak())
 
     def cbegin(self) -> const_iterator[Key, Value]:
-        return self.iterator(0, self._items.tree.min(), self._items.tree,
+        return self.iterator(self._items.tree.min(), self._items.tree,
                              self._tokenizer.create_weak())
 
     def cend(self) -> const_iterator[Key, Value]:
-        return self.const_iterator(len(self._items), red_black.NIL,
-                                   self._items.tree,
+        return self.const_iterator(red_black.NIL, self._items.tree,
                                    self._tokenizer.create_weak())
 
     def clear(self) -> None:
@@ -70,30 +69,27 @@ class map(Generic[Key, Value]):
         self._items.clear()
 
     def crbegin(self) -> const_reverse_iterator[Key, Value]:
-        return self.const_reverse_iterator(0, self._items.tree.max(),
+        return self.const_reverse_iterator(self._items.tree.max(),
                                            self._items.tree,
                                            self._tokenizer.create_weak())
 
     def crend(self) -> const_reverse_iterator[Key, Value]:
-        return self.const_reverse_iterator(len(self._items), red_black.NIL,
-                                           self._items.tree,
+        return self.const_reverse_iterator(red_black.NIL, self._items.tree,
                                            self._tokenizer.create_weak())
 
     def empty(self) -> bool:
         return not self._items
 
     def end(self) -> iterator[Key, Value]:
-        return self.iterator(len(self._items), red_black.NIL, self._items.tree,
+        return self.iterator(red_black.NIL, self._items.tree,
                              self._tokenizer.create_weak())
 
     def rbegin(self) -> reverse_iterator[Key, Value]:
-        return self.reverse_iterator(0, self._items.tree.max(),
-                                     self._items.tree,
+        return self.reverse_iterator(self._items.tree.max(), self._items.tree,
                                      self._tokenizer.create_weak())
 
     def rend(self) -> reverse_iterator[Key, Value]:
-        return self.reverse_iterator(len(self._items), red_black.NIL,
-                                     self._items.tree,
+        return self.reverse_iterator(red_black.NIL, self._items.tree,
                                      self._tokenizer.create_weak())
 
     def size(self) -> int:
