@@ -1,15 +1,18 @@
 import pickle
 from collections import deque
 from functools import partial
-from itertools import count
+from itertools import (count,
+                       zip_longest)
 from operator import (eq,
                       itemgetter)
 from typing import (Any,
                     Callable,
                     Iterable,
+                    Iterator,
                     List,
                     Tuple,
-                    TypeVar)
+                    TypeVar,
+                    Union)
 
 from _cppstd import (map as BoundMap,
                      set as BoundSet,
@@ -28,9 +31,16 @@ Strategy = SearchStrategy
 BoundMap = BoundMap
 BoundSet = BoundSet
 BoundVector = BoundVector
+BoundVectorIterator = Union[BoundVector.const_iterator,
+                            BoundVector.const_reverse_iterator,
+                            BoundVector.iterator, BoundVector.reverse_iterator]
 PortedMap = PortedMap
 PortedSet = PortedSet
 PortedVector = PortedVector
+PortedVectorIterator = Union[PortedVector.const_iterator,
+                             PortedVector.const_reverse_iterator,
+                             PortedVector.iterator,
+                             PortedVector.reverse_iterator]
 BoundPortedMapsPair = Tuple[BoundMap, PortedMap]
 BoundPortedSetsPair = Tuple[BoundSet, PortedSet]
 BoundPortedVectorsPair = Tuple[BoundVector, PortedVector]
@@ -93,6 +103,33 @@ def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
     return bound.size() == ported.size() and all(map(eq, bound, ported))
+
+
+def are_bound_ported_vector_iterators_equal(bound: BoundVectorIterator,
+                                            bound_stop: BoundVectorIterator,
+                                            ported: PortedVectorIterator,
+                                            ported_stop: PortedVectorIterator,
+                                            ) -> bool:
+    return are_bound_ported_iterators_equal(bound, bound_stop,
+                                            ported, ported_stop)
+
+
+def are_bound_ported_iterators_equal(bound: Domain,
+                                     bound_stop: Domain,
+                                     ported: Range,
+                                     ported_stop: Range) -> bool:
+    return all(bound_iterator is not None
+               and ported_iterator is not None
+               and bound_iterator.value == ported_iterator.value
+               for bound_iterator, ported_iterator
+               in zip_longest(iterate_cpp_iterator(bound, bound_stop),
+                              iterate_cpp_iterator(ported, ported_stop),
+                              fillvalue=None))
+
+
+def iterate_cpp_iterator(start: Domain, stop: Domain) -> Iterator[Domain]:
+    while start != stop:
+        yield start.inc()
 
 
 def to_bound_ported_maps_pair(items: List[Item]) -> BoundPortedMapsPair:
