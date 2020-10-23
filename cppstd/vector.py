@@ -70,6 +70,14 @@ class _base_vector_iterator:
                 if isinstance(other, type(self))
                 else NotImplemented)
 
+    def dec(self) -> '_base_vector_iterator':
+        index = self._to_validated_index()
+        if not index:
+            raise RuntimeError('Post-decrementing of start iterators '
+                               'is undefined.')
+        self._index -= 1
+        return type(self)(index, self._values, self._token)
+
     def inc(self) -> '_base_vector_iterator':
         index = self._to_validated_index()
         if index == len(self._values):
