@@ -19,7 +19,9 @@ from .hints import Value
 class vector_iterator(Iterator[Value]):
     __slots__ = '_index', '_values', '_token'
 
-    def __init__(self, index: int, values: List[Value],
+    def __init__(self,
+                 index: int,
+                 values: List[Value],
                  token: SharedToken) -> None:
         self._index = index
         self._values = values
