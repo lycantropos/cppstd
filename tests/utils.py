@@ -29,6 +29,9 @@ Domain = TypeVar('Domain')
 Range = TypeVar('Range')
 Strategy = SearchStrategy
 BoundMap = BoundMap
+BoundMapIterator = Union[BoundMap.const_iterator,
+                         BoundMap.const_reverse_iterator,
+                         BoundMap.iterator, BoundMap.reverse_iterator]
 BoundSet = BoundSet
 BoundSetIterator = Union[BoundSet.const_iterator,
                          BoundSet.const_reverse_iterator,
@@ -38,6 +41,9 @@ BoundVectorIterator = Union[BoundVector.const_iterator,
                             BoundVector.const_reverse_iterator,
                             BoundVector.iterator, BoundVector.reverse_iterator]
 PortedMap = PortedMap
+PortedMapIterator = Union[PortedMap.const_iterator,
+                          PortedMap.const_reverse_iterator,
+                          PortedMap.iterator, PortedMap.reverse_iterator]
 PortedSet = PortedSet
 PortedSetIterator = Union[PortedSet.const_iterator,
                           PortedSet.const_reverse_iterator,
@@ -100,6 +106,15 @@ item_to_key = itemgetter(0)
 
 def are_bound_ported_maps_equal(bound: BoundMap, ported: PortedMap) -> bool:
     return bound.size() == ported.size() and all(map(eq, bound, ported))
+
+
+def are_bound_ported_map_iterators_equal(bound: BoundMapIterator,
+                                         bound_stop: BoundMapIterator,
+                                         ported: PortedMapIterator,
+                                         ported_stop: PortedMapIterator,
+                                         ) -> bool:
+    return are_bound_ported_iterators_equal(bound, bound_stop, ported,
+                                            ported_stop)
 
 
 def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
