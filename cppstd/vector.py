@@ -54,25 +54,34 @@ class _base_vector_iterator:
 
     def __eq__(self, other: Any) -> bool:
         return (self._validate_comparison_with(other)
-                or self._index == other._index
+                or self._to_validated_index() == other._to_validated_index()
                 if isinstance(other, type(self))
                 else NotImplemented)
 
     def __le__(self, other: Any) -> bool:
         return (self._validate_comparison_with(other)
-                or self._index <= other._index
+                or self._to_validated_index() <= other._to_validated_index()
                 if isinstance(other, type(self))
                 else NotImplemented)
 
     def __lt__(self, other: Any) -> bool:
         return (self._validate_comparison_with(other)
-                or self._index < other._index
+                or self._to_validated_index() < other._to_validated_index()
                 if isinstance(other, type(self))
                 else NotImplemented)
 
+    def inc(self) -> '_base_vector_iterator':
+        index = self._to_validated_index()
+        if index == len(self._values):
+            raise RuntimeError('Post-incrementing of stop iterators '
+                               'is undefined.')
+        self._index += 1
+        return type(self)(index, self._values, self._token)
+
     def _move_index(self, offset: int) -> int:
-        size = len(self._to_validated_values())
-        min_offset, max_offset = -self._index, size - self._index
+        index = self._to_validated_index()
+        size = len(self._values)
+        min_offset, max_offset = -index, size - index
         if offset < min_offset or offset > max_offset:
             raise RuntimeError('Advancing of iterators out-of-bound '
                                'is undefined: '
@@ -82,14 +91,14 @@ class _base_vector_iterator:
                                .format(min_offset=min_offset,
                                        max_offset=max_offset + 1,
                                        offset=offset)
-                               if self._index != size
+                               if index != size
                                else 'Advancing of stop iterators '
                                     'is undefined.')
-        return self._index + offset
+        return index + offset
 
-    def _to_validated_values(self) -> List[Value]:
+    def _to_validated_index(self) -> int:
         self._validate()
-        return self._values
+        return self._index
 
     def _validate(self) -> None:
         if self._token.expired:
@@ -97,7 +106,7 @@ class _base_vector_iterator:
 
     def _validate_comparison_with(self,
                                   other: '_base_vector_iterator') -> None:
-        if self._to_validated_values() is not other._to_validated_values():
+        if self._values is not other._values:
             raise RuntimeError('Comparing iterators '
                                'from different collections is undefined.')
 
