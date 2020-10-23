@@ -243,12 +243,14 @@ to_advanced_position(
   Index min_offset = -std::distance(begin, const_position);
   Index max_offset = std::distance(const_position, end);
   if (offset < min_offset || offset > max_offset) {
-    throw py::value_error(
-        begin == end ? std::string("Collection is empty.")
-                     : (std::string("Offset should be in range(") +
-                        std::to_string(min_offset) + ", " +
-                        std::to_string(max_offset + 1) + "), but found " +
-                        std::to_string(offset) + "."));
+    throw std::runtime_error(
+        position == end
+            ? std::string("Advancing of placeholder iterators is undefined.")
+            : (std::string("Advancing of iterators out-of-bound is undefined: "
+                           "offset should be in range(") +
+               std::to_string(min_offset) + ", " +
+               std::to_string(max_offset + 1) + "), but found " +
+               std::to_string(offset) + "."));
   }
   return position + offset;
 }
@@ -286,7 +288,7 @@ BaseIterator<RawCollection, constant, reversed> operator++(
   auto& position = iterator.to_position();
   if (position == iterator.to_end())
     throw std::runtime_error(
-        "Post-incrementing placeholder iterators is undefined.");
+        "Post-incrementing of placeholder iterators is undefined.");
   return iterator.with_position(position++);
 }
 
@@ -296,7 +298,7 @@ BaseIterator<RawCollection, constant, reversed>& operator++(
   auto& position = iterator.to_position();
   if (position == iterator.to_end())
     throw std::runtime_error(
-        "Pre-incrementing placeholder iterators is undefined.");
+        "Pre-incrementing of placeholder iterators is undefined.");
   ++position;
   return iterator;
 }
