@@ -53,20 +53,20 @@ class _base_vector_iterator:
         self._token = token
 
     def __eq__(self, other: Any) -> bool:
-        return (self._to_validated_values() is other._to_validated_values()
-                and self._index == other._index
+        return (self._validate_comparison_with(other)
+                or self._index == other._index
                 if isinstance(other, type(self))
                 else NotImplemented)
 
     def __le__(self, other: Any) -> bool:
-        return (self._to_validated_values() is other._to_validated_values()
-                and self._index <= other._index
+        return (self._validate_comparison_with(other)
+                or self._index <= other._index
                 if isinstance(other, type(self))
                 else NotImplemented)
 
     def __lt__(self, other: Any) -> bool:
-        return (self._to_validated_values() is other._to_validated_values()
-                and self._index < other._index
+        return (self._validate_comparison_with(other)
+                or self._index < other._index
                 if isinstance(other, type(self))
                 else NotImplemented)
 
@@ -94,6 +94,12 @@ class _base_vector_iterator:
     def _validate(self) -> None:
         if self._token.expired:
             raise RuntimeError('Iterator is invalidated.')
+
+    def _validate_comparison_with(self,
+                                  other: '_base_vector_iterator') -> None:
+        if self._to_validated_values() is not other._to_validated_values():
+            raise RuntimeError('Comparing iterators '
+                               'from different collections is undefined.')
 
 
 class vector(Generic[Value]):
