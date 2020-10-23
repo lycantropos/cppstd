@@ -30,12 +30,18 @@ Range = TypeVar('Range')
 Strategy = SearchStrategy
 BoundMap = BoundMap
 BoundSet = BoundSet
+BoundSetIterator = Union[BoundSet.const_iterator,
+                         BoundSet.const_reverse_iterator,
+                         BoundSet.iterator, BoundSet.reverse_iterator]
 BoundVector = BoundVector
 BoundVectorIterator = Union[BoundVector.const_iterator,
                             BoundVector.const_reverse_iterator,
                             BoundVector.iterator, BoundVector.reverse_iterator]
 PortedMap = PortedMap
 PortedSet = PortedSet
+PortedSetIterator = Union[PortedSet.const_iterator,
+                          PortedSet.const_reverse_iterator,
+                          PortedSet.iterator, PortedSet.reverse_iterator]
 PortedVector = PortedVector
 PortedVectorIterator = Union[PortedVector.const_iterator,
                              PortedVector.const_reverse_iterator,
@@ -100,6 +106,15 @@ def are_bound_ported_sets_equal(bound: BoundSet, ported: PortedSet) -> bool:
     return bound.size() == ported.size() and all(map(eq, bound, ported))
 
 
+def are_bound_ported_set_iterators_equal(bound: BoundSetIterator,
+                                         bound_stop: BoundSetIterator,
+                                         ported: PortedSetIterator,
+                                         ported_stop: PortedSetIterator,
+                                         ) -> bool:
+    return are_bound_ported_iterators_equal(bound, bound_stop, ported,
+                                            ported_stop)
+
+
 def are_bound_ported_vectors_equal(bound: BoundVector,
                                    ported: PortedVector) -> bool:
     return bound.size() == ported.size() and all(map(eq, bound, ported))
@@ -110,8 +125,8 @@ def are_bound_ported_vector_iterators_equal(bound: BoundVectorIterator,
                                             ported: PortedVectorIterator,
                                             ported_stop: PortedVectorIterator,
                                             ) -> bool:
-    return are_bound_ported_iterators_equal(bound, bound_stop,
-                                            ported, ported_stop)
+    return are_bound_ported_iterators_equal(bound, bound_stop, ported,
+                                            ported_stop)
 
 
 def are_bound_ported_iterators_equal(bound: Domain,
