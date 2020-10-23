@@ -1,7 +1,6 @@
+import builtins
 from typing import (Generic,
                     Iterator)
-
-from reprit.base import generate_repr
 
 from .core import red_black
 from .core.tokenization import (SharedToken,
@@ -64,7 +63,9 @@ class map(Generic[Key, Value]):
         self._items = red_black.map_(*_items)
         self._tokenizer = Tokenizer()
 
-    __repr__ = generate_repr(__init__)
+    def __repr__(self) -> str:
+        return (type(self).__qualname__ + '('
+                + ', '.join(builtins.map(repr, self)) + ')')
 
     def __eq__(self, other: 'map[Key, Value]') -> bool:
         return (self._items == other._items
