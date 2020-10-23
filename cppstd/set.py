@@ -1,5 +1,4 @@
-from typing import (Any,
-                    Generic,
+from typing import (Generic,
                     Iterator)
 
 from reprit.base import (generate_repr,
