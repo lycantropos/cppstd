@@ -284,7 +284,9 @@ template <class RawCollection, bool constant, bool reversed>
 BaseIterator<RawCollection, constant, reversed> operator++(
     BaseIterator<RawCollection, constant, reversed>& iterator) {
   auto& position = iterator.to_position();
-  if (position == iterator.to_end()) throw py::stop_iteration();
+  if (position == iterator.to_end())
+    throw std::runtime_error(
+        "Post-incrementing placeholder iterators is undefined.");
   return iterator.with_position(position++);
 }
 
@@ -292,7 +294,9 @@ template <class RawCollection, bool constant, bool reversed>
 BaseIterator<RawCollection, constant, reversed>& operator++(
     BaseIterator<RawCollection, constant, reversed>& iterator, int) {
   auto& position = iterator.to_position();
-  if (position == iterator.to_end()) throw py::stop_iteration();
+  if (position == iterator.to_end())
+    throw std::runtime_error(
+        "Pre-incrementing placeholder iterators is undefined.");
   ++position;
   return iterator;
 }
