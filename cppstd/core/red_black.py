@@ -2,16 +2,12 @@ from typing import Union
 
 from dendroid.red_black import (NIL,
                                 Node,
-                                Tree,
-                                map_,
-                                set_)
+                                Tree)
 
 from .tokenization import WeakToken
 
 AnyNode = Union[NIL, Node]
 Tree = Tree
-map_ = map_
-set_ = set_
 
 
 class BaseTreeIterator:
