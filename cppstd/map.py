@@ -65,10 +65,6 @@ class map(Generic[Key, Value]):
                                                       else ((), ())))
         self._tokenizer = Tokenizer()
 
-    def __repr__(self) -> str:
-        return (type(self).__qualname__ + '('
-                + ', '.join(builtins.map(repr, self)) + ')')
-
     def __eq__(self, other: 'map[Key, Value]') -> bool:
         return (self._tree.values == other._tree.values
                 if isinstance(other, map)
@@ -77,6 +73,10 @@ class map(Generic[Key, Value]):
     def __iter__(self) -> map_iterator[Value]:
         return map_iterator(self._tree.min(), self._tree,
                             self._tokenizer.create_shared())
+
+    def __repr__(self) -> str:
+        return (type(self).__qualname__ + '('
+                + ', '.join(builtins.map(repr, self)) + ')')
 
     def __setitem__(self, key: Key, value: Value) -> None:
         node = self._tree.find(key)
