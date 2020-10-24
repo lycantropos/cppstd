@@ -217,6 +217,17 @@ class Tree:
     def clear(self) -> None:
         self.root, self.size = NIL, 0
 
+    def find(self, key: Key) -> AnyNode:
+        node = self.root
+        while node is not NIL:
+            if key < node.key:
+                node = node.left
+            elif node.key < key:
+                node = node.right
+            else:
+                break
+        return node
+
     def insert(self, key: Key, value: Value) -> Node:
         parent = self.root
         if parent is NIL:
