@@ -91,25 +91,6 @@ class Node:
 AnyNode = Union[NIL, Node]
 
 
-def _set_parent(node: Union[NIL, Node], parent: Optional[Node]) -> None:
-    if node is not NIL:
-        node.parent = parent
-
-
-def _set_black(maybe_node: Optional[Node]) -> None:
-    if maybe_node is not None:
-        maybe_node.is_black = True
-
-
-def _is_left_child(node: Node) -> bool:
-    parent = node.parent
-    return parent is not None and parent.left is node
-
-
-def _is_node_black(node: Union[NIL, Node]) -> bool:
-    return node is NIL or node.is_black
-
-
 class Tree:
     __slots__ = 'root', 'size'
 
@@ -473,3 +454,22 @@ class TreeReverseIterator(BaseTreeIterator):
         self._node = self._tree.predecessor(node)
         self._index += 1
         return type(self)(index, node, self._tree, self._token)
+
+
+def _is_left_child(node: Node) -> bool:
+    parent = node.parent
+    return parent is not None and parent.left is node
+
+
+def _is_node_black(node: Union[NIL, Node]) -> bool:
+    return node is NIL or node.is_black
+
+
+def _set_black(maybe_node: Optional[Node]) -> None:
+    if maybe_node is not None:
+        maybe_node.is_black = True
+
+
+def _set_parent(node: Union[NIL, Node], parent: Optional[Node]) -> None:
+    if node is not NIL:
+        node.parent = parent
