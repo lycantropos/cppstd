@@ -1,6 +1,7 @@
-from typing import (Tuple,
-                    TypeVar)
+from .core.hints import (Item,
+                         Key,
+                         Value)
 
-Key = TypeVar('Key')
-Value = TypeVar('Value')
-Item = Tuple[Key, Value]
+Key = Key
+Value = Value
+Item = Item
