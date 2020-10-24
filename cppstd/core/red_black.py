@@ -168,7 +168,7 @@ class Tree:
                          if middle_index < end_index - 1
                          else NIL))
 
-            root = to_node(0, len(keys), 0)
+            root = to_node(0, size, 0)
             root.is_black = True
         else:
             items = to_unique_sorted_items(keys, tuple(values))
@@ -189,7 +189,7 @@ class Tree:
                          if middle_index < end_index - 1
                          else NIL))
 
-            root = to_node(0, len(items), 0)
+            root = to_node(0, size, 0)
             root.is_black = True
         return cls(root, size)
 
