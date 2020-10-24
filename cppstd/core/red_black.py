@@ -147,8 +147,7 @@ class Tree:
                         ) -> 'Tree[Key, Value]':
         keys = list(keys)
         if not keys:
-            root = NIL
-            size = 0
+            root, size = NIL, 0
         elif values is None:
             keys = to_unique_sorted_values(keys)
             size = len(keys)
