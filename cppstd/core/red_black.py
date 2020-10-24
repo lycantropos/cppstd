@@ -150,6 +150,7 @@ class Tree:
             root = NIL
         elif values is None:
             keys = to_unique_sorted_values(keys)
+            size = len(keys)
 
             def to_node(start_index: int,
                         end_index: int,
@@ -171,6 +172,7 @@ class Tree:
             root.is_black = True
         else:
             items = to_unique_sorted_items(keys, tuple(values))
+            size = len(items)
 
             def to_node(start_index: int,
                         end_index: int,
@@ -189,7 +191,7 @@ class Tree:
 
             root = to_node(0, len(items), 0)
             root.is_black = True
-        return cls(root, len(keys))
+        return cls(root, size)
 
     @property
     def items(self) -> List[Value]:
