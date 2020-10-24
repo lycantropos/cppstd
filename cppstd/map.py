@@ -66,7 +66,7 @@ class map(Generic[Key, Value]):
         self._tokenizer = Tokenizer()
 
     def __eq__(self, other: 'map[Key, Value]') -> bool:
-        return (self._tree.values == other._tree.values
+        return (self._tree.items == other._tree.items
                 if isinstance(other, map)
                 else NotImplemented)
 

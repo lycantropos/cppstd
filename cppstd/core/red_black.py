@@ -192,6 +192,10 @@ class Tree:
         return cls(root, len(keys))
 
     @property
+    def items(self) -> List[Value]:
+        return [node.item for node in self]
+
+    @property
     def values(self) -> List[Value]:
         return [node.value for node in self]
 
