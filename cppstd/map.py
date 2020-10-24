@@ -119,8 +119,8 @@ class map(Generic[Key, Value]):
                              self._tokenizer.create_weak())
 
     def rbegin(self) -> reverse_iterator[Key, Value]:
-        return self.reverse_iterator(0, self._tree.max(),
-                                     self._tree, self._tokenizer.create_weak())
+        return self.reverse_iterator(0, self._tree.max(), self._tree,
+                                     self._tokenizer.create_weak())
 
     def rend(self) -> reverse_iterator[Key, Value]:
         return self.reverse_iterator(len(self._tree), red_black.NIL,
