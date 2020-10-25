@@ -92,7 +92,7 @@ AnyNode = Union[NIL, Node]
 
 
 class Tree:
-    __slots__ = 'root', 'size', 'min_node', 'max_node'
+    __slots__ = 'root', 'size', 'min', 'max'
 
     def __init__(self,
                  root: AnyNode,
@@ -101,8 +101,8 @@ class Tree:
                  max_node: AnyNode) -> None:
         self.root = root
         self.size = size
-        self.min_node = min_node
-        self.max_node = max_node
+        self.min = min_node
+        self.max = max_node
 
     __repr__ = generate_repr(__init__)
 
@@ -227,7 +227,7 @@ class Tree:
         return [node.value for node in self]
 
     def clear(self) -> None:
-        self.root = self.min_node = self.max_node = NIL
+        self.root = self.min = self.max = NIL
         self.size = 0
 
     def find(self, key: Key) -> AnyNode:
@@ -244,8 +244,7 @@ class Tree:
     def insert(self, key: Key, value: Value) -> Tuple[Node, bool]:
         parent = self.root
         if parent is NIL:
-            node = self.root = self.min_node = self.max_node = Node(key, value,
-                                                                    True)
+            node = self.root = self.min = self.max = Node(key, value, True)
             self.size = 1
             return node, True
         while True:
@@ -267,23 +266,17 @@ class Tree:
                 return parent, False
         self._restore(node)
         self.size += 1
-        if key < self.min_node.key:
-            self.min_node = node
-        elif self.max_node.key < key:
-            self.max_node = node
+        if key < self.min.key:
+            self.min = node
+        elif self.max.key < key:
+            self.max = node
         return node, True
 
-    def max(self) -> AnyNode:
-        return self.max_node
-
-    def min(self) -> AnyNode:
-        return self.min_node
-
     def remove(self, node: Node) -> None:
-        if node is self.min_node:
-            self.min_node = self.successor(node)
-        if node is self.max_node:
-            self.max_node = self.predecessor(node)
+        if node is self.min:
+            self.min = self.successor(node)
+        if node is self.max:
+            self.max = self.predecessor(node)
         successor, is_node_black = node, node.is_black
         if successor.left is NIL:
             (successor_child, successor_child_parent,
@@ -413,14 +406,12 @@ class Tree:
 
 
 class BaseTreeIterator:
-    __slots__ = '_index', '_node', '_tree', '_token'
+    __slots__ = '_node', '_tree', '_token'
 
     def __init__(self,
-                 index: int,
                  node: AnyNode,
                  tree: Tree,
                  token: WeakToken) -> None:
-        self._index = index
         self._node = node
         self._tree = tree
         self._token = token
@@ -448,45 +439,41 @@ class BaseTreeIterator:
 class TreeIterator(BaseTreeIterator):
     def dec(self) -> 'TreeIterator':
         node = self._to_validated_node()
-        index = self._index
-        if not index:
+        if node is self._tree.min:
             raise RuntimeError('Post-decrementing of start iterators '
                                'is undefined.')
-        self._node = self._tree.predecessor(node)
-        self._index -= 1
-        return type(self)(index, node, self._tree, self._token)
+        self._node = (self._tree.max
+                      if node is NIL
+                      else self._tree.predecessor(node))
+        return type(self)(node, self._tree, self._token)
 
     def inc(self) -> 'TreeIterator':
         node = self._to_validated_node()
         if node is NIL:
             raise RuntimeError('Post-incrementing of stop iterators '
                                'is undefined.')
-        index = self._index
         self._node = self._tree.successor(node)
-        self._index += 1
-        return type(self)(index, node, self._tree, self._token)
+        return type(self)(node, self._tree, self._token)
 
 
 class TreeReverseIterator(BaseTreeIterator):
     def dec(self) -> 'TreeReverseIterator':
         node = self._to_validated_node()
-        index = self._index
-        if not index:
+        if node is self._tree.max:
             raise RuntimeError('Post-decrementing of start iterators '
                                'is undefined.')
-        self._node = self._tree.successor(node)
-        self._index -= 1
-        return type(self)(index, node, self._tree, self._token)
+        self._node = (self._tree.min
+                      if node is NIL
+                      else self._tree.successor(node))
+        return type(self)(node, self._tree, self._token)
 
     def inc(self) -> 'TreeReverseIterator':
         node = self._to_validated_node()
         if node is NIL:
             raise RuntimeError('Post-incrementing of stop iterators '
                                'is undefined.')
-        index = self._index
         self._node = self._tree.predecessor(node)
-        self._index += 1
-        return type(self)(index, node, self._tree, self._token)
+        return type(self)(node, self._tree, self._token)
 
 
 def _is_left_child(node: Node) -> bool:
