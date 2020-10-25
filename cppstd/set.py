@@ -27,7 +27,7 @@ class set_iterator(Iterator[Value]):
             raise RuntimeError('Iterator is invalidated.')
         if self._node is red_black.NIL:
             raise StopIteration
-        value = self._node.value
+        value = self._node.key
         self._node = self._tree.successor(self._node)
         return value
 
