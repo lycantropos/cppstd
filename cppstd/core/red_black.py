@@ -33,7 +33,7 @@ class Node:
                  is_black: bool,
                  left: Union[NIL, 'Node'] = NIL,
                  right: Union[NIL, 'Node'] = NIL,
-                 parent: Optional['Node'] = None) -> None:
+                 parent: Union[NIL, 'Node'] = NIL) -> None:
         self._key, self.value, self.is_black = key, value, is_black
         self.left, self.right, self._parent = left, right, parent
 
@@ -51,7 +51,7 @@ class Node:
 
     @classmethod
     def from_simple(cls, key: Key, *args: Any) -> 'Node':
-        return cls(key, key, *args)
+        return cls(key, None, *args)
 
     @property
     def item(self) -> Item:
@@ -92,11 +92,17 @@ AnyNode = Union[NIL, Node]
 
 
 class Tree:
-    __slots__ = 'root', 'size'
+    __slots__ = 'root', 'size', 'min_node', 'max_node'
 
-    def __init__(self, root: AnyNode, size: int) -> None:
+    def __init__(self,
+                 root: AnyNode,
+                 size: int,
+                 min_node: AnyNode,
+                 max_node: AnyNode) -> None:
         self.root = root
         self.size = size
+        self.min_node = min_node
+        self.max_node = max_node
 
     __repr__ = generate_repr(__init__)
 
@@ -120,7 +126,7 @@ class Tree:
     def predecessor(node: Node) -> Node:
         if node.left is NIL:
             result = node.parent
-            while result is not None and node is result.left:
+            while result is not NIL and node is result.left:
                 node, result = result, result.parent
         else:
             result = node.left
@@ -132,7 +138,7 @@ class Tree:
     def successor(node: Node) -> Node:
         if node.right is NIL:
             result = node.parent
-            while result is not None and node is result.right:
+            while result is not NIL and node is result.right:
                 node, result = result, result.parent
         else:
             result = node.right
@@ -147,19 +153,22 @@ class Tree:
                         ) -> 'Tree[Key, Value]':
         keys = list(keys)
         if not keys:
-            root, size = NIL, 0
+            root = min_node = max_node = NIL
+            size = 0
         elif values is None:
             keys = to_unique_sorted_values(keys)
             size = len(keys)
+            min_node = max_node = NIL
 
             def to_node(start_index: int,
                         end_index: int,
                         depth: int,
-                        height: int = to_balanced_tree_height(len(keys)),
+                        height: int = to_balanced_tree_height(size),
+                        max_index: int = size - 1,
                         constructor: Callable[..., Node] = Node.from_simple
                         ) -> Node:
                 middle_index = (start_index + end_index) // 2
-                return constructor(
+                result = constructor(
                         keys[middle_index], depth != height,
                         (to_node(start_index, middle_index, depth + 1)
                          if middle_index > start_index
@@ -167,20 +176,29 @@ class Tree:
                         (to_node(middle_index + 1, end_index, depth + 1)
                          if middle_index < end_index - 1
                          else NIL))
+                if not middle_index:
+                    nonlocal min_node
+                    min_node = result
+                if middle_index == max_index:
+                    nonlocal max_node
+                    max_node = result
+                return result
 
             root = to_node(0, size, 0)
             root.is_black = True
         else:
             items = to_unique_sorted_items(keys, tuple(values))
             size = len(items)
+            min_node = max_node = NIL
 
             def to_node(start_index: int,
                         end_index: int,
                         depth: int,
-                        height: int = to_balanced_tree_height(len(items)),
+                        height: int = to_balanced_tree_height(size),
+                        max_index: int = size - 1,
                         constructor: Callable[..., Node] = Node) -> Node:
                 middle_index = (start_index + end_index) // 2
-                return constructor(
+                result = constructor(
                         *items[middle_index], depth != height,
                         (to_node(start_index, middle_index, depth + 1)
                          if middle_index > start_index
@@ -188,10 +206,17 @@ class Tree:
                         (to_node(middle_index + 1, end_index, depth + 1)
                          if middle_index < end_index - 1
                          else NIL))
+                if not middle_index:
+                    nonlocal min_node
+                    min_node = result
+                if middle_index == max_index:
+                    nonlocal max_node
+                    max_node = result
+                return result
 
             root = to_node(0, size, 0)
             root.is_black = True
-        return cls(root, size)
+        return cls(root, size, min_node, max_node)
 
     @property
     def items(self) -> List[Value]:
@@ -202,7 +227,8 @@ class Tree:
         return [node.value for node in self]
 
     def clear(self) -> None:
-        self.root, self.size = NIL, 0
+        self.root = self.min_node = self.max_node = NIL
+        self.size = 0
 
     def find(self, key: Key) -> AnyNode:
         node = self.root
@@ -215,12 +241,13 @@ class Tree:
                 break
         return node
 
-    def insert(self, key: Key, value: Value) -> Node:
+    def insert(self, key: Key, value: Value) -> Tuple[Node, bool]:
         parent = self.root
         if parent is NIL:
-            node = self.root = Node(key, value, True)
+            node = self.root = self.min_node = self.max_node = Node(key, value,
+                                                                    True)
             self.size = 1
-            return node
+            return node, True
         while True:
             if key < parent.key:
                 if parent.left is NIL:
@@ -237,26 +264,26 @@ class Tree:
                 else:
                     parent = parent.right
             else:
-                return parent
+                return parent, False
         self._restore(node)
         self.size += 1
-        return node
+        if key < self.min_node.key:
+            self.min_node = node
+        elif self.max_node.key < key:
+            self.max_node = node
+        return node, True
 
     def max(self) -> AnyNode:
-        node = self.root
-        if node is not NIL:
-            while node.right is not NIL:
-                node = node.right
-        return node
+        return self.max_node
 
     def min(self) -> AnyNode:
-        node = self.root
-        if node is not NIL:
-            while node.left is not NIL:
-                node = node.left
-        return node
+        return self.min_node
 
     def remove(self, node: Node) -> None:
+        if node is self.min_node:
+            self.min_node = self.successor(node)
+        if node is self.max_node:
+            self.max_node = self.predecessor(node)
         successor, is_node_black = node, node.is_black
         if successor.left is NIL:
             (successor_child, successor_child_parent,
