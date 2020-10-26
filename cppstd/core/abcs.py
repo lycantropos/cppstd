@@ -1,6 +1,5 @@
 from abc import (ABC,
                  abstractmethod)
-from typing import Optional
 
 from .hints import Value
 
@@ -18,7 +17,7 @@ class LegacyIterator(ABC):
 
 class LegacyInputIterator(LegacyIterator):
     @abstractmethod
-    def inc(self) -> Optional['LegacyInputIterator']:
+    def inc(self) -> 'LegacyInputIterator':
         """Increments the iterator."""
 
 
