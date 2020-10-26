@@ -149,7 +149,6 @@ class set(Generic[Value]):
                     self._tokenizer.reset()
                 for value in values:
                     self._tree.insert(value, None)
-                return None
             else:
                 node, inserted = self._tree.insert(first_arg, None)
                 if inserted:
@@ -172,14 +171,9 @@ class set(Generic[Value]):
                 self._tokenizer.reset()
             for value in values:
                 self._tree.insert(value, None)
-        elif isinstance(first_arg, set.const_iterator):
+        else:
             self._tokenizer.reset()
             self._tree.insert(second_arg, None)
-        else:
-            raise TypeError('Unsupported arguments types: '
-                            '{first_type}, {second_type}.'
-                            .format(first_type=type(first_arg),
-                                    second_type=type(second_arg)))
         return None
 
     def rbegin(self) -> reverse_iterator[Value]:
