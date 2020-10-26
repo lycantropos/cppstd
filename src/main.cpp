@@ -394,6 +394,11 @@ It& next(It& iterator) {
   return ++iterator;
 }
 
+template <class It>
+It& prev(It& iterator) {
+  return --iterator;
+}
+
 template <class Collection>
 using ConstIterator = BaseIterator<Collection, true, false>;
 template <class Collection>
@@ -791,6 +796,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<MapConstIterator>)
       .def("inc", &inc<MapConstIterator>)
       .def("next", &next<MapConstIterator>)
+      .def("prev", &prev<MapConstIterator>)
       .def_property_readonly("value", &get_iterator_value<MapConstIterator>);
 
   py::class_<MapConstReverseIterator> PyMapConstReverseIterator(
@@ -800,6 +806,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<MapConstReverseIterator>)
       .def("inc", &inc<MapConstReverseIterator>)
       .def("next", &next<MapConstReverseIterator>)
+      .def("prev", &prev<MapConstReverseIterator>)
       .def_property_readonly("value",
                              &get_iterator_value<MapConstReverseIterator>);
 
@@ -842,6 +849,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<SetConstIterator>)
       .def("inc", &inc<SetConstIterator>)
       .def("next", &next<SetConstIterator>)
+      .def("prev", &prev<SetConstIterator>)
       .def_property_readonly("value", &get_iterator_value<SetConstIterator>);
 
   py::class_<SetConstReverseIterator> PySetConstReverseIterator(
@@ -851,6 +859,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<SetConstReverseIterator>)
       .def("inc", &inc<SetConstReverseIterator>)
       .def("next", &next<SetConstReverseIterator>)
+      .def("prev", &prev<SetConstReverseIterator>)
       .def_property_readonly("value",
                              &get_iterator_value<SetConstReverseIterator>);
 
@@ -907,6 +916,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<VectorConstIterator>)
       .def("inc", &inc<VectorConstIterator>)
       .def("next", &next<VectorConstIterator>)
+      .def("prev", &prev<VectorConstIterator>)
       .def_property_readonly("value", &get_iterator_value<VectorConstIterator>);
 
   py::class_<VectorConstReverseIterator>(PyVector, CONST_REVERSE_ITERATOR_NAME)
@@ -921,6 +931,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<VectorConstReverseIterator>)
       .def("inc", &inc<VectorConstReverseIterator>)
       .def("next", &next<VectorConstReverseIterator>)
+      .def("prev", &prev<VectorConstReverseIterator>)
       .def_property_readonly("value",
                              &get_iterator_value<VectorConstReverseIterator>);
 
@@ -936,6 +947,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<VectorIterator>)
       .def("inc", &inc<VectorIterator>)
       .def("next", &next<VectorIterator>)
+      .def("prev", &prev<VectorIterator>)
       .def_property("value", &get_iterator_value<VectorIterator>,
                     &set_iterator_value<VectorIterator>);
 
@@ -951,6 +963,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def("dec", &dec<VectorReverseIterator>)
       .def("inc", &inc<VectorReverseIterator>)
       .def("next", &next<VectorReverseIterator>)
+      .def("prev", &prev<VectorReverseIterator>)
       .def_property("value", &get_iterator_value<VectorReverseIterator>,
                     &set_iterator_value<VectorReverseIterator>);
 
