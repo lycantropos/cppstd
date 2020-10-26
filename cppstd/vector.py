@@ -125,6 +125,8 @@ class vector(Generic[Value]):
             return vector.const_iterator(self._move_index(offset),
                                          self._values, self._token)
 
+        __radd__ = __add__
+
         def __iadd__(self, offset: int) -> 'vector.const_iterator[Value]':
             self._index = self._move_index(offset)
             return self
@@ -150,6 +152,8 @@ class vector(Generic[Value]):
                     offset: int) -> 'vector.const_reverse_iterator[Value]':
             return vector.const_reverse_iterator(self._move_index(offset),
                                                  self._values, self._token)
+
+        __radd__ = __add__
 
         def __iadd__(self,
                      offset: int) -> 'vector.const_reverse_iterator[Value]':
@@ -179,6 +183,8 @@ class vector(Generic[Value]):
         def __add__(self, offset: int) -> 'vector.iterator[Value]':
             return vector.iterator(self._move_index(offset), self._values,
                                    self._token)
+
+        __radd__ = __add__
 
         def __iadd__(self, offset: int) -> 'vector.iterator[Value]':
             self._index = self._move_index(offset)
@@ -213,6 +219,8 @@ class vector(Generic[Value]):
                     offset: int) -> 'vector.reverse_iterator[Value]':
             return vector.reverse_iterator(self._move_index(offset),
                                            self._values, self._token)
+
+        __radd__ = __add__
 
         def __iadd__(self,
                      offset: int) -> 'vector.reverse_iterator[Value]':
