@@ -223,8 +223,8 @@ class Tree:
         return [node.item for node in self]
 
     @property
-    def values(self) -> List[Value]:
-        return [node.value for node in self]
+    def keys(self) -> List[Value]:
+        return [node.key for node in self]
 
     def clear(self) -> None:
         self.root = self.min = self.max = NIL

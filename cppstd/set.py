@@ -62,7 +62,7 @@ class set(Generic[Value]):
         self._tokenizer = Tokenizer()
 
     def __eq__(self, other: 'set[Value]') -> bool:
-        return (self._tree.values == other._tree.values
+        return (self._tree.keys == other._tree.keys
                 if isinstance(other, set)
                 else NotImplemented)
 
@@ -71,12 +71,12 @@ class set(Generic[Value]):
                             self._tokenizer.create_shared())
 
     def __le__(self, other: 'set[Value]') -> bool:
-        return (self._tree.values <= other._tree.values
+        return (self._tree.keys <= other._tree.keys
                 if isinstance(other, set)
                 else NotImplemented)
 
     def __lt__(self, other: 'set[Value]') -> bool:
-        return (self._tree.values < other._tree.values
+        return (self._tree.keys < other._tree.keys
                 if isinstance(other, set)
                 else NotImplemented)
 
