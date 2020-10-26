@@ -1,3 +1,6 @@
+from collections import abc
+from copy import copy as _copy
+from itertools import repeat
 from typing import (Any,
                     Generic,
                     Iterable,
@@ -9,7 +12,8 @@ from typing import (Any,
 from reprit.base import (generate_repr,
                          seekers)
 
-from .core.abcs import LegacyRandomAccessIterator
+from .core.abcs import (LegacyInputIterator,
+                        LegacyRandomAccessIterator)
 from .core.tokenization import (SharedToken,
                                 Tokenizer,
                                 WeakToken)
@@ -350,9 +354,61 @@ class vector(Generic[Value]):
         return vector.iterator(self.size(), self._values,
                                self._tokenizer.create_weak())
 
-    def insert(self, index: int, value: Value) -> None:
-        self._tokenizer.reset()
-        self._values.insert(index, value)
+    @overload
+    def insert(self,
+               position: const_iterator,
+               value: Value) -> None:
+        """Inserts given value before given position."""
+
+    @overload
+    def insert(self,
+               position: const_iterator,
+               values: Iterable[Value]) -> None:
+        """Inserts given values before given position."""
+
+    @overload
+    def insert(self,
+               position: const_iterator,
+               count: int,
+               value: Value) -> None:
+        """Inserts given value given count of times before given position."""
+
+    @overload
+    def insert(self,
+               position: const_iterator,
+               first: LegacyInputIterator,
+               last: LegacyInputIterator) -> None:
+        """Inserts given value given count of times before given position."""
+
+    def insert(self,
+               position: const_iterator,
+               second_arg,
+               third_arg=None) -> None:
+        index = position._index
+        if third_arg is None:
+            if isinstance(second_arg, abc.Iterable):
+                values = list(second_arg)
+                if values:
+                    self._tokenizer.reset()
+                self._values[index:index] = second_arg
+            else:
+                self._tokenizer.reset()
+                self._values.insert(index, second_arg)
+        elif isinstance(second_arg, int):
+            if second_arg < 0:
+                raise ValueError('`count` should be positive, but found {}.'
+                                 .format(second_arg))
+            if second_arg:
+                self._tokenizer.reset()
+            self._values[index:index] = repeat(third_arg, second_arg)
+        else:
+            first = _copy(second_arg)
+            values = []
+            while first != third_arg:
+                values.append(first.inc().value)
+            if values:
+                self._tokenizer.reset()
+            self._values[index:index] = values
 
     def pop_back(self) -> None:
         self._tokenizer.reset()
