@@ -8,7 +8,7 @@ from .hints import Value
 class LegacyIterator(ABC):
     @abstractmethod
     def next(self) -> 'LegacyIterator':
-        """Returns incremented the iterator."""
+        """Returns incremented iterator."""
 
     @property
     @abstractmethod
@@ -46,7 +46,7 @@ class LegacyBidirectionalIterator(LegacyForwardIterator):
 
     @abstractmethod
     def prev(self) -> 'LegacyForwardIterator':
-        """Returns decremented the iterator."""
+        """Returns decremented iterator."""
 
 
 class LegacyRandomAccessIterator(LegacyBidirectionalIterator):
