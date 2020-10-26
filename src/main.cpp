@@ -304,6 +304,13 @@ BaseIterator<RawCollection, constant, reversed> operator+(
 }
 
 template <class RawCollection, bool constant, bool reversed>
+BaseIterator<RawCollection, constant, reversed> operator+(
+    Index offset,
+    const BaseIterator<RawCollection, constant, reversed>& iterator) {
+  return iterator + offset;
+}
+
+template <class RawCollection, bool constant, bool reversed>
 BaseIterator<RawCollection, constant, reversed> operator-(
     const BaseIterator<RawCollection, constant, reversed>& iterator,
     Index offset) {
@@ -909,6 +916,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def(Index{} + py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
@@ -924,6 +932,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def(Index{} + py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
@@ -940,6 +949,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def(Index{} + py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
@@ -956,6 +966,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
       .def(py::self != py::self)
       .def(py::self < py::self)
       .def(py::self <= py::self)
+      .def(Index{} + py::self)
       .def(py::self + Index{})
       .def(py::self - Index{})
       .def(py::self += Index{})
