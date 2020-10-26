@@ -9,6 +9,7 @@ from typing import (Any,
 from reprit.base import (generate_repr,
                          seekers)
 
+from .core.abcs import LegacyRandomAccessIterator
 from .core.tokenization import (SharedToken,
                                 Tokenizer,
                                 WeakToken)
@@ -41,7 +42,7 @@ class vector_iterator(Iterator[Value]):
             return value
 
 
-class _base_vector_iterator:
+class _base_vector_iterator(LegacyRandomAccessIterator):
     __slots__ = '_index', '_values', '_token'
 
     def __init__(self,
@@ -85,6 +86,22 @@ class _base_vector_iterator:
                                'is undefined.')
         self._index += 1
         return type(self)(index, self._values, self._token)
+
+    def next(self) -> '_base_vector_iterator':
+        index = self._to_validated_index()
+        if index == len(self._values):
+            raise RuntimeError('Pre-incrementing of stop iterators '
+                               'is undefined.')
+        self._index += 1
+        return self
+
+    def prev(self) -> '_base_vector_iterator':
+        index = self._to_validated_index()
+        if not index:
+            raise RuntimeError('Pre-decrementing of start iterators '
+                               'is undefined.')
+        self._index -= 1
+        return self
 
     def _move_index(self, offset: int) -> int:
         index = self._to_validated_index()
