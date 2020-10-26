@@ -1,8 +1,14 @@
 import builtins
+from collections import abc
+from copy import copy as _copy
 from typing import (Generic,
-                    Iterator)
+                    Iterable,
+                    Iterator,
+                    Tuple,
+                    overload)
 
 from .core import red_black
+from .core.abcs import LegacyInputIterator
 from .core.tokenization import (SharedToken,
                                 Tokenizer)
 from .core.utils import identity
@@ -114,6 +120,67 @@ class set(Generic[Value]):
     def end(self) -> iterator[Value]:
         return self.iterator(red_black.NIL, self._tree,
                              self._tokenizer.create_weak())
+
+    @overload
+    def insert(self, value: Value) -> Tuple[iterator, bool]:
+        """Inserts value."""
+
+    @overload
+    def insert(self, values: Iterable[Value]) -> None:
+        """Inserts values."""
+
+    @overload
+    def insert(self,
+               first: LegacyInputIterator,
+               last: LegacyInputIterator) -> None:
+        """Inserts values from range."""
+
+    @overload
+    def insert(self, hint: const_iterator, value: Value) -> None:
+        """
+        Inserts values in the position as close as possible just prior to hint.
+        """
+
+    def insert(self, first_arg, second_arg=None):
+        if second_arg is None:
+            if isinstance(first_arg, abc.Iterable):
+                values = list(first_arg)
+                if values:
+                    self._tokenizer.reset()
+                for value in values:
+                    self._tree.insert(value, None)
+                return None
+            else:
+                node, inserted = self._tree.insert(first_arg, None)
+                if inserted:
+                    self._tokenizer.reset()
+                return (set.iterator(node, self._tree,
+                                     self._tokenizer.create_weak()),
+                        inserted)
+        elif isinstance(second_arg, LegacyInputIterator):
+            if not isinstance(first_arg, type(second_arg)):
+                raise TypeError('Both ends of the insertion range '
+                                'should have same type, but found: '
+                                '{first_type}, {last_type}.'
+                                .format(first_type=type(first_arg),
+                                        last_type=type(second_arg)))
+            first = _copy(first_arg)
+            values = []
+            while first != second_arg:
+                values.append(first.inc().value)
+            if values:
+                self._tokenizer.reset()
+            for value in values:
+                self._tree.insert(value, None)
+        elif isinstance(first_arg, set.const_iterator):
+            self._tokenizer.reset()
+            self._tree.insert(second_arg, None)
+        else:
+            raise TypeError('Unsupported arguments types: '
+                            '{first_type}, {second_type}.'
+                            .format(first_type=type(first_arg),
+                                    second_type=type(second_arg)))
+        return None
 
     def rbegin(self) -> reverse_iterator[Value]:
         return self.reverse_iterator(self._tree.max, self._tree,
