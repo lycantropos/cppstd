@@ -10,6 +10,7 @@ from typing import (Any,
 
 from reprit.base import generate_repr
 
+from .abcs import LegacyBidirectionalIterator
 from .hints import (Item,
                     Key,
                     Value)
@@ -405,7 +406,7 @@ class Tree:
             parent.right = replacement
 
 
-class BaseTreeIterator:
+class BaseTreeIterator(LegacyBidirectionalIterator):
     __slots__ = '_node', '_tree', '_token'
 
     def __init__(self,
@@ -455,6 +456,24 @@ class TreeIterator(BaseTreeIterator):
         self._node = self._tree.successor(node)
         return type(self)(node, self._tree, self._token)
 
+    def next(self) -> 'TreeIterator':
+        node = self._to_validated_node()
+        if node is NIL:
+            raise RuntimeError('Pre-incrementing of stop iterators '
+                               'is undefined.')
+        self._node = self._tree.successor(node)
+        return self
+
+    def prev(self) -> 'TreeIterator':
+        node = self._to_validated_node()
+        if node is self._tree.min:
+            raise RuntimeError('Pre-decrementing of start iterators '
+                               'is undefined.')
+        self._node = (self._tree.max
+                      if node is NIL
+                      else self._tree.predecessor(node))
+        return self
+
 
 class TreeReverseIterator(BaseTreeIterator):
     def dec(self) -> 'TreeReverseIterator':
@@ -474,6 +493,24 @@ class TreeReverseIterator(BaseTreeIterator):
                                'is undefined.')
         self._node = self._tree.predecessor(node)
         return type(self)(node, self._tree, self._token)
+
+    def next(self) -> 'TreeReverseIterator':
+        node = self._to_validated_node()
+        if node is NIL:
+            raise RuntimeError('Pre-incrementing of stop iterators '
+                               'is undefined.')
+        self._node = self._tree.predecessor(node)
+        return self
+
+    def prev(self) -> 'TreeReverseIterator':
+        node = self._to_validated_node()
+        if node is self._tree.max:
+            raise RuntimeError('Pre-decrementing of start iterators '
+                               'is undefined.')
+        self._node = (self._tree.min
+                      if node is NIL
+                      else self._tree.successor(node))
+        return self
 
 
 def _is_left_child(node: Node) -> bool:
