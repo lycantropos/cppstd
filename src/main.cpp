@@ -729,6 +729,7 @@ class Vector {
                                     std::to_string(size) + "), but found " +
                                     std::to_string(index) + ".")
                                  : std::string("Sequence is empty."));
+    _tokenizer.reset();
     (*_raw)[normalized_index] = value;
   }
 
