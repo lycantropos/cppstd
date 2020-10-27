@@ -79,7 +79,7 @@ class SharedToken {
 
 class WeakToken {
  public:
-  WeakToken(std::weak_ptr<TokenValue> ptr) : _ptr(std::move(ptr)) {}
+  WeakToken(const std::shared_ptr<TokenValue>& ptr) : _ptr(ptr) {}
 
   bool expired() const { return _ptr.expired(); }
 
@@ -89,7 +89,7 @@ class WeakToken {
 
 class Tokenizer {
  public:
-  Tokenizer() : _ptr(std::make_shared<std::shared_ptr<TokenValue>>()) {}
+  Tokenizer() : _ptr(std::make_shared<std::shared_ptr<TokenValue>>(std::make_shared<TokenValue>())) {}
 
   void reset() { _ptr->reset(new TokenValue()); }
 
