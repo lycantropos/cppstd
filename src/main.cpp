@@ -58,46 +58,48 @@ static bool operator==(const Object& left, const Object& right) {
 }
 }  // namespace pybind11
 
-class SharedToken {
- public:
-  SharedToken(std::shared_ptr<bool> ptr)
-      : _checking_ptr(ptr), _ptr(std::move(ptr)) {}
-
-  bool expired() const { return _checking_ptr.expired(); }
-
- private:
-  std::weak_ptr<bool> _checking_ptr;
-  std::shared_ptr<bool> _ptr;
-};
-
-class WeakToken {
- public:
-  WeakToken(std::weak_ptr<bool> ptr) : _ptr(std::move(ptr)) {}
-
-  bool expired() const { return _ptr.expired(); }
-
- private:
-  std::weak_ptr<bool> _ptr;
-};
-
-class Tokenizer {
- public:
-  Tokenizer() : _ptr(std::make_shared<bool>(false)) {}
-
-  void reset() { _ptr.reset(new bool(false)); }
-
-  SharedToken create_shared() const { return {_ptr}; }
-
-  WeakToken create_weak() const { return {_ptr}; }
-
- private:
-  std::shared_ptr<bool> _ptr;
-};
-
 template <class T>
 static bool are_addresses_equal(const T& left, const T& right) {
   return std::addressof(left) == std::addressof(right);
 }
+
+using TokenValue = bool;
+
+class SharedToken {
+ public:
+  SharedToken(std::shared_ptr<std::shared_ptr<TokenValue>> container)
+      : _ptr(*container), _container(std::move(container)) {}
+
+  bool expired() const { return !are_addresses_equal(*_ptr, **_container); }
+
+ private:
+  std::shared_ptr<TokenValue> _ptr;
+  std::shared_ptr<std::shared_ptr<TokenValue>> _container;
+};
+
+class WeakToken {
+ public:
+  WeakToken(std::weak_ptr<TokenValue> ptr) : _ptr(std::move(ptr)) {}
+
+  bool expired() const { return _ptr.expired(); }
+
+ private:
+  std::weak_ptr<TokenValue> _ptr;
+};
+
+class Tokenizer {
+ public:
+  Tokenizer() : _ptr(std::make_shared<std::shared_ptr<TokenValue>>()) {}
+
+  void reset() { _ptr->reset(new TokenValue()); }
+
+  SharedToken create_shared() const { return {_ptr}; }
+
+  WeakToken create_weak() const { return {*_ptr}; }
+
+ private:
+  std::shared_ptr<std::shared_ptr<TokenValue>> _ptr;
+};
 
 template <class T>
 std::string to_repr(const T& value) {
