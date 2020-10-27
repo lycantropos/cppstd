@@ -89,7 +89,9 @@ class WeakToken {
 
 class Tokenizer {
  public:
-  Tokenizer() : _ptr(std::make_shared<std::shared_ptr<TokenValue>>(std::make_shared<TokenValue>())) {}
+  Tokenizer()
+      : _ptr(std::make_shared<std::shared_ptr<TokenValue>>(
+            std::make_shared<TokenValue>())) {}
 
   void reset() { _ptr->reset(new TokenValue()); }
 
