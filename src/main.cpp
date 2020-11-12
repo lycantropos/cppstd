@@ -766,7 +766,7 @@ static std::ostream& operator<<(std::ostream& stream, const Vector& vector) {
 
 PYBIND11_MODULE(MODULE_NAME, m) {
   m.doc() = R"pbdoc(Partial binding of C++ standard library.)pbdoc";
-  m.attr("__version__") = VERSION_INFO;
+  m.attr("__version__") = C_STR(VERSION_INFO);
 
   py::class_<Map> PyMap(m, MAP_NAME);
   PyMap
